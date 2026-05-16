@@ -28,7 +28,7 @@
 
 <table>
   <tr>
-    <td><img src="Screenshots/0.png" width="200"/></td>
+    <td><img src="Screenshots/1.png" width="200"/></td>
     <td><img src="Screenshots/4(main).png" width="200"/></td>
     <td><img src="Screenshots/6(gallery1).png" width="200"/></td>
   </tr>
@@ -41,14 +41,14 @@
 
 <table>
   <tr>
-    <td><img src="Screenshots/7(gallery2).png" width="200"/></td>
-    <td><img src="Screenshots/8(gallery3).png" width="200"/></td>
+    <td><img src="Screenshots/12.png" width="200"/></td>
     <td><img src="Screenshots/10.png" width="200"/></td>
+    <td><img src="Screenshots/11.png" width="200"/></td>
   </tr>
   <tr>
     <td><em>Image Generation</em></td>
     <td><em>Virtual Try-On</em></td>
-    <td><em>Edit Image</em></td>
+    <td><em>Virtual Try-On Output</em></td>
   </tr>
 </table>
 
