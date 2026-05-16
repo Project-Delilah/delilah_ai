@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:gal/gal.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../../shared/widgets/glass_input.dart';
 import '../../../../shared/widgets/glass_button.dart';
@@ -40,11 +41,12 @@ class _UpscaleScreenState extends ConsumerState<UpscaleScreen> {
   Future<void> _saveImage(BuildContext context, String url) async {
     try {
       final response = await http.get(Uri.parse(url));
-      final tempFile = await File('/tmp/delilah_${DateTime.now().millisecondsSinceEpoch}.jpg').writeAsBytes(response.bodyBytes);
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/delilah_${DateTime.now().millisecondsSinceEpoch}.jpg');
+      await tempFile.writeAsBytes(response.bodyBytes);
       await Gal.putImage(tempFile.path);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved to gallery!'), backgroundColor: AppColors.deepEnterpriseGreen));
-      }
+      await tempFile.delete();
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved to gallery!'), backgroundColor: AppColors.deepEnterpriseGreen));
     } catch (e) {
       if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Save failed: $e')));
     }

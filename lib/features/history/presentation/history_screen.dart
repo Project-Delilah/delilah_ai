@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:gal/gal.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/theme_controller.dart';
@@ -239,8 +239,11 @@ class _GalleryTile extends ConsumerWidget {
                             onPressed: () async {
                               try {
                                 final response = await http.get(Uri.parse(item.url));
-                                final tempFile = await File('/tmp/delilah_${DateTime.now().millisecondsSinceEpoch}.jpg').writeAsBytes(response.bodyBytes);
+                                final tempDir = await getTemporaryDirectory();
+                                final tempFile = File('${tempDir.path}/delilah_${DateTime.now().millisecondsSinceEpoch}.jpg');
+                                await tempFile.writeAsBytes(response.bodyBytes);
                                 await Gal.putImage(tempFile.path);
+                                await tempFile.delete();
                                 if (ctx.mounted) {
                                   ScaffoldMessenger.of(ctx).showSnackBar(
                                     const SnackBar(
