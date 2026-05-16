@@ -6,6 +6,10 @@ import '../features/auth/presentation/register_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
 import '../features/endpoints/image_generation/presentation/image_gen_screen.dart';
 import '../features/endpoints/virtual_tryon/presentation/tryon_screen.dart';
+import '../features/endpoints/image_edit/presentation/image_edit_screen.dart';
+import '../features/endpoints/upscale/presentation/upscale_screen.dart';
+import '../features/endpoints/product_makeover/presentation/product_makeover_screen.dart';
+import '../features/endpoints/fix_old_image/presentation/fix_old_image_screen.dart';
 import '../features/history/presentation/history_screen.dart';
 import 'theme/theme_controller.dart';
 
@@ -28,6 +32,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: '/generate', builder: (_, __) => const ImageGenScreen()),
           GoRoute(path: '/tryon', builder: (_, __) => const TryonScreen()),
+          GoRoute(path: '/edit', builder: (_, __) => const ImageEditScreen()),
+          GoRoute(path: '/upscale', builder: (_, __) => const UpscaleScreen()),
+          GoRoute(path: '/product-makeover', builder: (_, __) => const ProductMakeoverScreen()),
+          GoRoute(path: '/fixoldimage', builder: (_, __) => const FixOldImageScreen()),
           GoRoute(path: '/history', builder: (_, __) => const GalleryScreen()),
         ],
       ),
@@ -56,6 +64,7 @@ class AppShell extends ConsumerWidget {
               children: [
                 _NavItem(icon: Icons.auto_awesome, label: 'Generate', isSelected: _isSelected(context, '/generate'), onTap: () => context.go('/generate')),
                 _NavItem(icon: Icons.checkroom, label: 'Try-On', isSelected: _isSelected(context, '/tryon'), onTap: () => context.go('/tryon')),
+                _NavItem(icon: Icons.more_horiz, label: 'More', isSelected: _isSelected(context, '/edit') || _isSelected(context, '/upscale') || _isSelected(context, '/product-makeover') || _isSelected(context, '/fixoldimage'), onTap: () => _showToolsMenu(context)),
                 _NavItem(icon: Icons.photo_library, label: 'Gallery', isSelected: _isSelected(context, '/history'), onTap: () => context.go('/history')),
                 _NavItem(icon: Icons.logout, label: 'Logout', isSelected: false, onTap: () {
                   showDialog(
@@ -86,6 +95,59 @@ class AppShell extends ConsumerWidget {
   }
 
   bool _isSelected(BuildContext context, String path) => GoRouterState.of(context).uri.path == path;
+
+  void _showToolsMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        decoration: const BoxDecoration(
+          color: AppColors.canvasWhite,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.hairline,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Text('More Tools', style: AppTextStyles.titleMedium),
+            const SizedBox(height: AppSpacing.lg),
+            _ToolTile(icon: Icons.edit, label: 'Edit Image', onTap: () { Navigator.pop(ctx); context.go('/edit'); }),
+            _ToolTile(icon: Icons.zoom_in, label: 'Upscale', onTap: () { Navigator.pop(ctx); context.go('/upscale'); }),
+            _ToolTile(icon: Icons.store, label: 'Product Makeover', onTap: () { Navigator.pop(ctx); context.go('/product-makeover'); }),
+            _ToolTile(icon: Icons.restore, label: 'Fix Old Image', onTap: () { Navigator.pop(ctx); context.go('/fixoldimage'); }),
+            const SizedBox(height: AppSpacing.md),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ToolTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ToolTile({required this.icon, required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon, color: AppColors.cohereBlack),
+      title: Text(label, style: AppTextStyles.bodyMedium),
+      onTap: onTap,
+      contentPadding: EdgeInsets.zero,
+    );
+  }
 }
 
 class _NavItem extends StatelessWidget {
