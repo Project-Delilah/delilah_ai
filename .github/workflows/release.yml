@@ -30,16 +30,14 @@ jobs:
         run: echo "MESSAGE=$(git log -1 --format='%s')" >> $GITHUB_OUTPUT
 
       - name: Configure signing
-        env:
-          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          cat > android/key.properties << EOF
-          storePassword=$STORE_PASSWORD
-          keyPassword=$KEY_PASSWORD
-          keyAlias=upload
-          storeFile=../../keystore/release-key.jks
-          EOF
+          echo "storePassword=${{ secrets.STORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=upload" >> android/key.properties
+          echo "storeFile=../../keystore/release-key.jks" >> android/key.properties
+          echo "=== Keystore Debug ==="
+          cat android/key.properties
+          echo "======================="
 
       - name: Get dependencies
         run: flutter pub get
