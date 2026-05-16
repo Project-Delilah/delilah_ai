@@ -25,10 +25,15 @@ class HomeScreen extends ConsumerWidget {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: AppColors.actionBlue,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Icon(Icons.auto_awesome, color: Colors.white, size: 40),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: const Image(
+                          image: AssetImage('assets/android-flutter-icon.png'),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     Text('Delilah', style: AppTextStyles.displayLarge.copyWith(color: AppColors.cohereBlack)),
