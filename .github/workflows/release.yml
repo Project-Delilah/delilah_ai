@@ -29,6 +29,14 @@ jobs:
         id: commit
         run: echo "MESSAGE=$(git log -1 --format='%s')" >> $GITHUB_OUTPUT
 
+      - name: Configure signing
+        env:
+          STORE_PASSWORD: ${{ secrets.STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          sed -i 's/\$STORE_PASSWORD/'"$STORE_PASSWORD"'/g' android/key.properties
+          sed -i 's/\$KEY_PASSWORD/'"$KEY_PASSWORD"'/g' android/key.properties
+
       - name: Get dependencies
         run: flutter pub get
 
