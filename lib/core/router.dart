@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../features/home/presentation/home_screen.dart';
 import '../features/auth/presentation/login_screen.dart';
 import '../features/auth/presentation/register_screen.dart';
 import '../features/auth/providers/auth_provider.dart';
@@ -21,7 +22,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final loggedIn = authState is AuthAuthenticated;
       final onAuth = state.uri.path == '/login' || state.uri.path == '/register';
       if (!loggedIn && !onAuth) return '/login';
-      if (loggedIn && onAuth) return '/generate';
+      if (loggedIn && onAuth) return '/home';
       return null;
     },
     routes: [
@@ -30,6 +31,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ShellRoute(
         builder: (_, __, child) => AppShell(child: child),
         routes: [
+          GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
           GoRoute(path: '/generate', builder: (_, __) => const ImageGenScreen()),
           GoRoute(path: '/tryon', builder: (_, __) => const TryonScreen()),
           GoRoute(path: '/edit', builder: (_, __) => const ImageEditScreen()),
@@ -62,9 +64,8 @@ class AppShell extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _NavItem(icon: Icons.auto_awesome, label: 'Generate', isSelected: _isSelected(context, '/generate'), onTap: () => context.go('/generate')),
-                _NavItem(icon: Icons.checkroom, label: 'Try-On', isSelected: _isSelected(context, '/tryon'), onTap: () => context.go('/tryon')),
-                _NavItem(icon: Icons.more_horiz, label: 'More', isSelected: _isSelected(context, '/edit') || _isSelected(context, '/upscale') || _isSelected(context, '/product-makeover') || _isSelected(context, '/fixoldimage'), onTap: () => _showToolsMenu(context)),
+                _NavItem(icon: Icons.home, label: 'Home', isSelected: _isSelected(context, '/home'), onTap: () => context.go('/home')),
+                _NavItem(icon: Icons.more_horiz, label: 'Tools', isSelected: _isSelected(context, '/generate') || _isSelected(context, '/tryon') || _isSelected(context, '/edit') || _isSelected(context, '/upscale') || _isSelected(context, '/product-makeover') || _isSelected(context, '/fixoldimage'), onTap: () => _showToolsMenu(context)),
                 _NavItem(icon: Icons.photo_library, label: 'Gallery', isSelected: _isSelected(context, '/history'), onTap: () => context.go('/history')),
                 _NavItem(icon: Icons.logout, label: 'Logout', isSelected: false, onTap: () {
                   showDialog(
@@ -118,8 +119,11 @@ class AppShell extends ConsumerWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            Text('More Tools', style: AppTextStyles.titleMedium),
+            Text('AI Tools', style: AppTextStyles.titleMedium),
             const SizedBox(height: AppSpacing.lg),
+            _ToolTile(icon: Icons.auto_awesome, label: 'Generate Image', onTap: () { Navigator.pop(ctx); context.go('/generate'); }),
+            _ToolTile(icon: Icons.checkroom, label: 'Virtual Try-On', onTap: () { Navigator.pop(ctx); context.go('/tryon'); }),
+            const Divider(),
             _ToolTile(icon: Icons.edit, label: 'Edit Image', onTap: () { Navigator.pop(ctx); context.go('/edit'); }),
             _ToolTile(icon: Icons.zoom_in, label: 'Upscale', onTap: () { Navigator.pop(ctx); context.go('/upscale'); }),
             _ToolTile(icon: Icons.store, label: 'Product Makeover', onTap: () { Navigator.pop(ctx); context.go('/product-makeover'); }),

@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../../shared/widgets/glass_input.dart';
 import '../../../../shared/widgets/glass_button.dart';
@@ -15,14 +17,22 @@ class ProductMakeoverScreen extends ConsumerStatefulWidget {
 }
 
 class _ProductMakeoverScreenState extends ConsumerState<ProductMakeoverScreen> {
-  final _imageUrlController = TextEditingController();
   final _contextController = TextEditingController(text: 'Place this product neatly on a premium, minimalist glass tabletop with soft cinematic light.');
 
   @override
   void dispose() {
-    _imageUrlController.dispose();
     _contextController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
+    if (image == null) return;
+    final extension = image.path.split('.').last.toLowerCase();
+    if (['gif', 'mp4', 'mov', 'avi', 'webm'].contains(extension)) return;
+    final file = File(image.path);
+    await ref.read(productMakeoverNotifierProvider.notifier).setImage(file);
   }
 
   @override
@@ -55,16 +65,19 @@ class _ProductMakeoverScreenState extends ConsumerState<ProductMakeoverScreen> {
                   ],
                 ),
               ] else ...[
+                _ImagePickerCard(
+                  imageFile: state.imageFile,
+                  imageUrl: state.imageUrl,
+                  isUploading: state.isUploading,
+                  onPick: state.isUploading || state.isProcessing ? null : _pickImage,
+                ),
+                const SizedBox(height: AppSpacing.lg),
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(color: AppColors.softStone, borderRadius: BorderRadius.circular(AppRadius.lg), border: Border.all(color: AppColors.hairline)),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Product Image URL', style: AppTextStyles.bodyLarge),
-                      const SizedBox(height: AppSpacing.md),
-                      GlassInput(controller: _imageUrlController, hint: 'https://...', icon: Icons.image),
-                      const SizedBox(height: AppSpacing.lg),
                       Text('Background Context', style: AppTextStyles.bodyLarge),
                       const SizedBox(height: AppSpacing.md),
                       GlassInput(controller: _contextController, hint: 'Place this product on...', icon: Icons.landscape),
@@ -72,14 +85,10 @@ class _ProductMakeoverScreenState extends ConsumerState<ProductMakeoverScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: GlassButton(
-                          onPressed: state.isLoading ? null : () {
-                            final url = _imageUrlController.text.trim();
-                            final ctx = _contextController.text.trim();
-                            if (url.isEmpty || ctx.isEmpty) return;
-                            notifier.setProductImageUrl(url);
-                            notifier.makeover(ctx);
-                          },
-                          label: state.isLoading ? 'Processing...' : 'Apply Makeover',
+                          onPressed: (state.imageUrl != null && !state.isUploading && !state.isProcessing)
+                              ? () => notifier.makeover(_contextController.text.trim())
+                              : null,
+                          label: state.isProcessing ? 'Processing...' : 'Apply Makeover',
                           icon: Icons.store,
                         ),
                       ),
@@ -91,6 +100,51 @@ class _ProductMakeoverScreenState extends ConsumerState<ProductMakeoverScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ImagePickerCard extends StatelessWidget {
+  final File? imageFile;
+  final String? imageUrl;
+  final bool isUploading;
+  final VoidCallback? onPick;
+
+  const _ImagePickerCard({this.imageFile, this.imageUrl, this.isUploading = false, this.onPick});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPick,
+      child: Container(
+        height: 200,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: AppColors.softStone,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.hairline),
+        ),
+        child: imageUrl != null
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CachedNetworkImage(imageUrl: imageUrl!, fit: BoxFit.cover),
+                    if (isUploading)
+                      Container(color: Colors.black54, child: const Center(child: CircularProgressIndicator())),
+                  ],
+                ),
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add_photo_alternate, size: 48, color: AppColors.mutedSlate),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text('Tap to select image', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.mutedSlate)),
+                ],
+              ),
       ),
     );
   }

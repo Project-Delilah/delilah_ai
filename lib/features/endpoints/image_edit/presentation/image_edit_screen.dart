@@ -1,10 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../../shared/widgets/glass_input.dart';
 import '../../../../shared/widgets/glass_button.dart';
-import '../../../../shared/widgets/async_value_widget.dart';
 import '../../../../shared/utils/wallpaper_engine.dart';
 import '../providers/image_edit_provider.dart';
 
@@ -16,14 +17,22 @@ class ImageEditScreen extends ConsumerStatefulWidget {
 }
 
 class _ImageEditScreenState extends ConsumerState<ImageEditScreen> {
-  final _imageUrlController = TextEditingController();
   final _promptController = TextEditingController();
 
   @override
   void dispose() {
-    _imageUrlController.dispose();
     _promptController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
+    if (image == null) return;
+    final extension = image.path.split('.').last.toLowerCase();
+    if (['gif', 'mp4', 'mov', 'avi', 'webm'].contains(extension)) return;
+    final file = File(image.path);
+    await ref.read(imageEditNotifierProvider.notifier).setImage(file);
   }
 
   @override
@@ -79,6 +88,13 @@ class _ImageEditScreenState extends ConsumerState<ImageEditScreen> {
                   ],
                 ),
               ] else ...[
+                _ImagePickerCard(
+                  imageFile: editState.imageFile,
+                  imageUrl: editState.imageUrl,
+                  isUploading: editState.isUploading,
+                  onPick: editState.isUploading || editState.isProcessing ? null : _pickImage,
+                ),
+                const SizedBox(height: AppSpacing.lg),
                 Container(
                   padding: const EdgeInsets.all(AppSpacing.lg),
                   decoration: BoxDecoration(
@@ -89,30 +105,6 @@ class _ImageEditScreenState extends ConsumerState<ImageEditScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Image URL', style: AppTextStyles.bodyLarge),
-                      const SizedBox(height: AppSpacing.md),
-                      GlassInput(
-                        controller: _imageUrlController,
-                        hint: 'https://...',
-                        icon: Icons.image,
-                      ),
-                      if (editState.imageUrl != null) ...[
-                        const SizedBox(height: AppSpacing.md),
-                        Container(
-                          height: 150,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(AppRadius.sm),
-                            border: Border.all(color: AppColors.hairline),
-                          ),
-                          clipBehavior: Clip.antiAlias,
-                          child: CachedNetworkImage(
-                            imageUrl: editState.imageUrl!,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: AppSpacing.lg),
                       Text('Edit Instructions', style: AppTextStyles.bodyLarge),
                       const SizedBox(height: AppSpacing.md),
                       GlassInput(
@@ -124,25 +116,20 @@ class _ImageEditScreenState extends ConsumerState<ImageEditScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: GlassButton(
-                          onPressed: editState.isLoading
-                              ? null
-                              : () {
-                                  final url = _imageUrlController.text.trim();
+                          onPressed: (editState.imageUrl != null && !editState.isUploading && !editState.isProcessing)
+                              ? () {
                                   final prompt = _promptController.text.trim();
-                                  if (url.isEmpty || prompt.isEmpty) return;
-                                  notifier.pickImage(url);
+                                  if (prompt.isEmpty) return;
                                   notifier.editImage(prompt);
-                                },
-                          label: editState.isLoading ? 'Processing...' : 'Apply Edit',
+                                }
+                              : null,
+                          label: editState.isProcessing ? 'Processing...' : 'Apply Edit',
                           icon: Icons.auto_fix_high,
                         ),
                       ),
                       if (editState.error != null) ...[
                         const SizedBox(height: AppSpacing.md),
-                        Text(
-                          editState.error!,
-                          style: TextStyle(color: AppColors.errorRed),
-                        ),
+                        Text(editState.error!, style: TextStyle(color: AppColors.errorRed)),
                       ],
                     ],
                   ),
@@ -151,6 +138,54 @@ class _ImageEditScreenState extends ConsumerState<ImageEditScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ImagePickerCard extends StatelessWidget {
+  final File? imageFile;
+  final String? imageUrl;
+  final bool isUploading;
+  final VoidCallback? onPick;
+
+  const _ImagePickerCard({this.imageFile, this.imageUrl, this.isUploading = false, this.onPick});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPick,
+      child: Container(
+        height: 200,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: AppColors.softStone,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.hairline),
+        ),
+        child: imageUrl != null
+            ? ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CachedNetworkImage(imageUrl: imageUrl!, fit: BoxFit.cover),
+                    if (isUploading)
+                      Container(
+                        color: Colors.black54,
+                        child: const Center(child: CircularProgressIndicator()),
+                      ),
+                  ],
+                ),
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add_photo_alternate, size: 48, color: AppColors.mutedSlate),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text('Tap to select image', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.mutedSlate)),
+                ],
+              ),
       ),
     );
   }
