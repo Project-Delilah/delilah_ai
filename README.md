@@ -265,6 +265,17 @@ flutter build apk --debug
 flutter build apk --release
 ```
 
+## signature key
+
+> android/key.properties
+```
+storePassword=
+keyPassword=
+keyAlias=upload
+storeFile=../../keystore/release-key.jks
+
+```
+
 ### Release Build
 
 The release build uses a custom keystore located at `../keystore/release-key.jks`.
