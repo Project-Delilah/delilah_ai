@@ -24,6 +24,36 @@
 
 ---
 
+## 📱 Screenshots
+
+<table>
+  <tr>
+    <td><img src="Screenshots/0.png" width="200"/></td>
+    <td><img src="Screenshots/4(main).png" width="200"/></td>
+    <td><img src="Screenshots/6(gallery1).png" width="200"/></td>
+  </tr>
+  <tr>
+    <td><em>Login Screen</em></td>
+    <td><em>Home Screen</em></td>
+    <td><em>Gallery View</em></td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td><img src="Screenshots/7(gallery2).png" width="200"/></td>
+    <td><img src="Screenshots/8(gallery3).png" width="200"/></td>
+    <td><img src="Screenshots/10.png" width="200"/></td>
+  </tr>
+  <tr>
+    <td><em>Image Generation</em></td>
+    <td><em>Virtual Try-On</em></td>
+    <td><em>Edit Image</em></td>
+  </tr>
+</table>
+
+---
+
 ## Overview
 
 **Delilah** is a production-ready Flutter mobile application that provides AI-powered image generation and editing capabilities. The app connects to a FastAPI backend with Vertex AI for image processing and uses Cloudinary for image storage.
