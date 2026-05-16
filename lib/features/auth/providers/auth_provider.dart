@@ -46,7 +46,7 @@ class AuthNotifier extends Notifier<AuthState> {
     try {
       final dio = ref.read(dioProvider);
       final response = await dio.post(
-        AppConfig.authUrl,
+        AppConfig.loginUrl,
         data: {'email': email, 'password': password},
       );
 
@@ -55,6 +55,18 @@ class AuthNotifier extends Notifier<AuthState> {
       state = AuthAuthenticated(token);
     } catch (e) {
       state = AuthUnauthenticated();
+      rethrow;
+    }
+  }
+
+  Future<void> signUp(String email, String password, String passwordConfirm) async {
+    try {
+      final dio = ref.read(dioProvider);
+      await dio.post(
+        AppConfig.registerUrl,
+        data: {'email': email, 'password': password, 'passwordConfirm': passwordConfirm},
+      );
+    } catch (e) {
       rethrow;
     }
   }
