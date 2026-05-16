@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:gal/gal.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../../shared/widgets/glass_input.dart';
 import '../../../../shared/widgets/glass_button.dart';
@@ -35,6 +37,46 @@ class _ImageEditScreenState extends ConsumerState<ImageEditScreen> {
     await ref.read(imageEditNotifierProvider.notifier).setImage(file);
   }
 
+  Future<void> _saveImage(BuildContext context, String url) async {
+    try {
+      final response = await http.get(Uri.parse(url));
+      final tempFile = await File('/tmp/delilah_${DateTime.now().millisecondsSinceEpoch}.jpg').writeAsBytes(response.bodyBytes);
+      await Gal.putImage(tempFile.path);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Saved to gallery!'), backgroundColor: AppColors.deepEnterpriseGreen),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Save failed: $e')));
+      }
+    }
+  }
+
+  void _showFullscreen(BuildContext context, String url) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => Scaffold(
+          backgroundColor: Colors.black,
+          body: Stack(
+            children: [
+              Center(child: CachedNetworkImage(imageUrl: url, fit: BoxFit.contain)),
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 8,
+                left: 8,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final editState = ref.watch(imageEditNotifierProvider);
@@ -51,20 +93,23 @@ class _ImageEditScreenState extends ConsumerState<ImageEditScreen> {
               Text('Edit Image', style: AppTextStyles.headlineLarge),
               const SizedBox(height: AppSpacing.lg),
               if (editState.resultUrl != null) ...[
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                    border: Border.all(color: AppColors.hairline),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: CachedNetworkImage(
-                    imageUrl: editState.resultUrl!,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    placeholder: (_, __) => Container(
-                      height: 200,
-                      color: AppColors.softStone,
-                      child: const Center(child: CircularProgressIndicator()),
+                GestureDetector(
+                  onTap: () => _showFullscreen(context, editState.resultUrl!),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                      border: Border.all(color: AppColors.hairline),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: CachedNetworkImage(
+                      imageUrl: editState.resultUrl!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      placeholder: (_, __) => Container(
+                        height: 200,
+                        color: AppColors.softStone,
+                        child: const Center(child: CircularProgressIndicator()),
+                      ),
                     ),
                   ),
                 ),
@@ -73,8 +118,16 @@ class _ImageEditScreenState extends ConsumerState<ImageEditScreen> {
                   children: [
                     Expanded(
                       child: GlassButton(
+                        onPressed: () => _saveImage(context, editState.resultUrl!),
+                        label: 'Save',
+                        icon: Icons.save_alt,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: GlassButton(
                         onPressed: () => WallpaperEngine.applyFromUrl(editState.resultUrl!),
-                        label: 'Set Wallpaper',
+                        label: 'Wallpaper',
                         icon: Icons.wallpaper,
                       ),
                     ),

@@ -24,8 +24,14 @@ class GalleryImage {
 }
 
 class GalleryNotifier extends AsyncNotifier<List<GalleryImage>> {
+  bool _hasLoadedOnce = false;
+
   @override
   Future<List<GalleryImage>> build() async {
+    if (!_hasLoadedOnce) {
+      _hasLoadedOnce = true;
+      Future.microtask(() => fetchGallery());
+    }
     return [];
   }
 

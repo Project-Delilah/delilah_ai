@@ -19,12 +19,6 @@ class GalleryScreen extends ConsumerStatefulWidget {
 
 class _GalleryScreenState extends ConsumerState<GalleryScreen> {
   @override
-  void initState() {
-    super.initState();
-    Future.microtask(() => ref.read(galleryNotifierProvider.notifier).fetchGallery());
-  }
-
-  @override
   Widget build(BuildContext context) {
     final galleryState = ref.watch(galleryNotifierProvider);
 

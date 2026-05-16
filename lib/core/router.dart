@@ -29,7 +29,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
       ShellRoute(
-        builder: (_, __, child) => AppShell(child: child),
+        builder: (context, state, child) => PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+            final currentPath = state.uri.path;
+            if (currentPath == '/home') {
+              return;
+            }
+            context.go('/home');
+          },
+          child: AppShell(child: child),
+        ),
         routes: [
           GoRoute(path: '/home', builder: (_, __) => const HomeScreen()),
           GoRoute(path: '/generate', builder: (_, __) => const ImageGenScreen()),
