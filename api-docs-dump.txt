@@ -1,0 +1,278 @@
+
+Unified Vertex AI & Cloudinary Media Pipeline
+
+ 1.3.0 
+
+OAS 3.1
+
+/openapi.json
+
+Interactive API service secured with PocketBase Bearer Token Authentication and dynamic user-scoped Cloudinary folders.
+Image Generation
+POST
+/api/generate
+Generate Studio Image
+Image Editing & Filters
+POST
+/api/edit
+Edit Image Canvas
+
+photoai / sepia Endpoint: Applies complex textural or semantic modification strategies to a source target image canvas.
+Parameters
+
+No parameters
+Request body
+
+{
+  "image_url": "https://example.com/",
+  "edit_prompt": "Convert this asset completely into a faded monochrome sepia filter profile"
+}
+
+Responses
+Code	Description	Links
+200	
+
+Successful Response
+Media type
+Controls Accept header.
+
+{
+  "status": "string",
+  "cloudinary_url": "string"
+}
+
+	No links
+422	
+
+Validation Error
+Media type
+
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string",
+      "input": "string",
+      "ctx": {}
+    }
+  ]
+}
+
+	No links
+POST
+/api/upscale
+Upscale Image Endpoint
+
+image_upscaler Endpoint: Reconstructs low-resolution source images into higher definition targets while scrubbing aliasing noise.
+Parameters
+
+No parameters
+Request body
+
+{
+  "image_url": "https://example.com/",
+  "enhancement_focus": "Enhance resolution, sharp focus, and remove digital compression noise."
+}
+
+Responses
+Code	Description	Links
+200	
+
+Successful Response
+Media type
+Controls Accept header.
+
+{
+  "status": "string",
+  "cloudinary_url": "string"
+}
+
+	No links
+422	
+
+Validation Error
+Media type
+
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string",
+      "input": "string",
+      "ctx": {}
+    }
+  ]
+}
+
+	No links
+Fashion & Apparel
+POST
+/api/tryon
+Virtual Tryon Pipeline
+
+vtryon / fashionai Endpoint: Drapes a isolated clothing item vector cleanly onto a person's photo layer using native virtual-try-on-001.
+Parameters
+
+No parameters
+Request body
+
+{
+  "person_image_url": "https://example.com/",
+  "product_image_url": "https://example.com/"
+}
+
+Responses
+Code	Description	Links
+200	
+
+Successful Response
+Media type
+Controls Accept header.
+
+{
+  "status": "string",
+  "cloudinary_url": "string"
+}
+
+	No links
+422	
+
+Validation Error
+Media type
+
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string",
+      "input": "string",
+      "ctx": {}
+    }
+  ]
+}
+
+	No links
+POST
+/api/product-makeover
+Product Makeover Endpoint
+
+product_makeover Endpoint: Compositions contextual synthetic backdrop scenery setups while keeping core commercial product layers completely intact.
+Parameters
+
+No parameters
+Request body
+
+{
+  "product_image_url": "https://example.com/",
+  "background_context": "Place this product neatly on a premium, minimalist glass tabletop with soft cinematic light."
+}
+
+Responses
+Code	Description	Links
+200	
+
+Successful Response
+Media type
+Controls Accept header.
+
+{
+  "status": "string",
+  "cloudinary_url": "string"
+}
+
+	No links
+422	
+
+Validation Error
+Media type
+
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string",
+      "input": "string",
+      "ctx": {}
+    }
+  ]
+}
+
+	No links
+Image Restoration
+POST
+/api/fixoldimage
+Fix Old Image Endpoint
+
+fixoldimage Endpoint: Parses artifacts out of aged photographs via multi-modal synthesis correction processing.
+Parameters
+
+No parameters
+Request body
+
+{
+  "image_url": "https://example.com/",
+  "repair_instructions": "Remove dust scratches, fix tears, and balance faded colors naturally."
+}
+
+Responses
+Code	Description	Links
+200	
+
+Successful Response
+Media type
+Controls Accept header.
+
+{
+  "status": "string",
+  "cloudinary_url": "string"
+}
+
+	No links
+422	
+
+Validation Error
+Media type
+
+{
+  "detail": [
+    {
+      "loc": [
+        "string",
+        0
+      ],
+      "msg": "string",
+      "type": "string",
+      "input": "string",
+      "ctx": {}
+    }
+  ]
+}
+
+	No links
+Schemas
+object
+object
+object
+object
+object
+object
+object
+object
+object
+

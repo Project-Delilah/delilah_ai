@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delilah AI Multi-Tool Dashboard</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --bg: #111827;
+            --text: #F9FAFB;
+            --surface: #1F2937;
+            --border: #374151;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+            margin: 0;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: var(--surface);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+        h2 { margin-top: 0; text-align: center; color: #E5E7EB; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 0.9em; color: #9CA3AF; font-weight: 500; }
+        input[type="text"], input[type="email"], input[type="password"], input[type="url"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background-color: #111827;
+            color: white;
+            box-sizing: border-box;
+            font-size: 1em;
+        }
+        select { cursor: pointer; }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #4338CA; }
+        button:disabled { background-color: var(--border); cursor: not-allowed; color: #9CA3AF; }
+
+        #generator-section { display: none; }
+        .hidden { display: none !important; }
+
+        .status {
+            margin-top: 15px;
+            font-size: 0.9em;
+            text-align: center;
+            color: #10B981; /* Success Green */
+            font-weight: 500;
+            word-wrap: break-word;
+        }
+        .error { color: #EF4444; } /* Error Red */
+
+        #result-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            background-color: #111827;
+        }
+        .loader {
+            display: none;
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 15px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN SECTION -->
+    <div class="container" id="login-section">
+        <h2>1. Authentication</h2>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email" value="sapangajjar101105@gmail.com">
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="password" value="sAPANGAJJAR01">
+        </div>
+        <button id="login-btn" onclick="login()">Login & Get Token</button>
+        <div id="login-status" class="status"></div>
+    </div>
+
+    <!-- AI TOOLS DASHBOARD SECTION -->
+    <div class="container" id="generator-section">
+        <h2>2. Vertex AI Tool Suite</h2>
+
+        <div class="form-group">
+            <label>Select AI Endpoint</label>
+            <select id="tool-selector" onchange="switchTool()">
+                <option value="generate">🎨 Image Generation (Text to Image)</option>
+                <option value="edit">🖌️ Image Edit & Filters</option>
+                <option value="upscale">🔍 Image Upscaler</option>
+                <option value="tryon">👕 Virtual Try-On</option>
+                <option value="product-makeover">📸 Product Makeover (Background Swap)</option>
+                <option value="fixoldimage">🩹 Fix Old/Damaged Image</option>
+            </select>
+        </div>
+
+        <hr style="border-color: var(--border); margin: 20px 0;">
+
+        <!-- DYNAMIC INPUT FIELDS -->
+
+        <!-- Standard Image URL Input -->
+        <div class="form-group tool-input" id="group-image-url" style="display: none;">
+            <label>Source Image URL</label>
+            <input type="url" id="image-url" placeholder="https://example.com/image.jpg">
+        </div>
+
+        <!-- Person Image URL (For Try-On) -->
+        <div class="form-group tool-input" id="group-person-url" style="display: none;">
+            <label>Person Image URL</label>
+            <input type="url" id="person-url" placeholder="https://example.com/person.jpg">
+        </div>
+
+        <!-- Product Image URL (For Try-On & Makeover) -->
+        <div class="form-group tool-input" id="group-product-url" style="display: none;">
+            <label>Product Image URL</label>
+            <input type="url" id="product-url" placeholder="https://example.com/product.jpg">
+        </div>
+
+        <!-- Single Text Prompt/Instruction Field -->
+        <div class="form-group tool-input" id="group-text-prompt">
+            <label id="label-text-prompt">Text Prompt / Instructions</label>
+            <input type="text" id="text-prompt" value="A minimalist, glassmorphic UI interface showcasing a media player layout">
+        </div>
+
+        <button id="execute-btn" onclick="executeTool()">Run AI Pipeline</button>
+
+        <!-- Loading & Status Indicators -->
+        <div id="loader" class="loader"></div>
+        <div id="gen-status" class="status"></div>
+
+        <!-- Results Display -->
+        <div id="result-container">
+            <img id="result-image" style="display: none;" />
+            <br>
+            <a id="result-link" href="#" target="_blank" style="display: none; color: #60A5FA; margin-top: 10px; font-weight: 500;">Open Original Asset in Cloudinary</a>
+        </div>
+    </div>
+
+    <script>
+        // API Base Configurations
+        const AUTH_URL = "https://project-delilah-bizniz.mooo.com/api/auth/login";
+        const API_BASE_URL = "https://project-delilah.mooo.com/api";
+
+        let bearerToken = "";
+
+        // Default placeholder configurations mapping for UI convenience
+        const toolConfigs = {
+            "generate": {
+                showImage: false, showPerson: false, showProduct: false, showText: true,
+                textLabel: "Image Prompt", textValue: "A futuristic cyberpunk city skyline, neon lights, 4k."
+            },
+            "edit": {
+                showImage: true, showPerson: false, showProduct: false, showText: true,
+                textLabel: "Edit Instructions (edit_prompt)", textValue: "Convert this asset completely into a faded monochrome sepia filter profile"
+            },
+            "upscale": {
+                showImage: true, showPerson: false, showProduct: false, showText: true,
+                textLabel: "Enhancement Focus (enhancement_focus)", textValue: "Enhance resolution, sharp focus, and remove digital compression noise."
+            },
+            "tryon": {
+                showImage: false, showPerson: true, showProduct: true, showText: false,
+                textLabel: "", textValue: ""
+            },
+            "product-makeover": {
+                showImage: false, showPerson: false, showProduct: true, showText: true,
+                textLabel: "Background Context (background_context)", textValue: "Place this product neatly on a premium, minimalist glass tabletop with soft cinematic light."
+            },
+            "fixoldimage": {
+                showImage: true, showPerson: false, showProduct: false, showText: true,
+                textLabel: "Repair Instructions (repair_instructions)", textValue: "Remove dust scratches, fix tears, and balance faded colors naturally."
+            }
+        };
+
+        // UI Setup on load
+        window.onload = () => switchTool();
+
+        // Handles dynamically showing/hiding inputs based on tool selected
+        function switchTool() {
+            const selected = document.getElementById("tool-selector").value;
+            const config = toolConfigs[selected];
+
+            document.getElementById("group-image-url").style.display = config.showImage ? "block" : "none";
+            document.getElementById("group-person-url").style.display = config.showPerson ? "block" : "none";
+            document.getElementById("group-product-url").style.display = config.showProduct ? "block" : "none";
+
+            const textGroup = document.getElementById("group-text-prompt");
+            textGroup.style.display = config.showText ? "block" : "none";
+            if(config.showText) {
+                document.getElementById("label-text-prompt").textContent = config.textLabel;
+                document.getElementById("text-prompt").value = config.textValue;
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const statusDiv = document.getElementById('login-status');
+            const loginBtn = document.getElementById('login-btn');
+
+            statusDiv.textContent = "Authenticating with PocketBase...";
+            statusDiv.className = "status";
+            loginBtn.disabled = true;
+
+            try {
+                const response = await fetch(AUTH_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) throw new Error(data.detail || "Login failed");
+
+                bearerToken = data.token;
+                statusDiv.textContent = "Login Successful! System unlocked.";
+
+                setTimeout(() => {
+                    document.getElementById('login-section').style.display = 'none';
+                    document.getElementById('generator-section').style.display = 'block';
+                }, 800);
+
+            } catch (error) {
+                statusDiv.textContent = `Error: ${error.message}`;
+                statusDiv.className = "status error";
+            } finally {
+                loginBtn.disabled = false;
+            }
+        }
+
+        async function executeTool() {
+            const tool = document.getElementById('tool-selector').value;
+            const statusDiv = document.getElementById('gen-status');
+            const btn = document.getElementById('execute-btn');
+            const loader = document.getElementById('loader');
+            const resultImg = document.getElementById('result-image');
+            const resultLink = document.getElementById('result-link');
+
+            // Collect Input Values
+            const imageUrl = document.getElementById('image-url').value;
+            const personUrl = document.getElementById('person-url').value;
+            const productUrl = document.getElementById('product-url').value;
+            const textData = document.getElementById('text-prompt').value;
+
+            // Build dynamic payload matching the Pydantic schemas in your Python code
+            let endpointUrl = `${API_BASE_URL}/${tool}`;
+            let payload = {};
+
+            if (tool === "generate") {
+                payload = { prompt: textData };
+            }
+            else if (tool === "edit") {
+                payload = { image_url: imageUrl, edit_prompt: textData };
+            }
+            else if (tool === "upscale") {
+                payload = { image_url: imageUrl, enhancement_focus: textData };
+            }
+            else if (tool === "tryon") {
+                payload = { person_image_url: personUrl, product_image_url: productUrl };
+            }
+            else if (tool === "product-makeover") {
+                payload = { product_image_url: productUrl, background_context: textData };
+            }
+            else if (tool === "fixoldimage") {
+                payload = { image_url: imageUrl, repair_instructions: textData };
+            }
+
+            // Reset UI
+            statusDiv.textContent = `Executing /api/${tool}... This may take 5-15 seconds.`;
+            statusDiv.className = "status";
+            btn.disabled = true;
+            loader.style.display = "block";
+            resultImg.style.display = "none";
+            resultLink.style.display = "none";
+
+            try {
+                const response = await fetch(endpointUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${bearerToken}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || JSON.stringify(data));
+                }
+
+                // Display Cloudinary Result
+                statusDiv.textContent = "Asset Generated Successfully!";
+                resultImg.src = data.secure_url;
+                resultImg.style.display = "block";
+
+                resultLink.href = data.secure_url;
+                resultLink.style.display = "inline-block";
+
+            } catch (error) {
+                statusDiv.textContent = `Pipeline Error: ${error.message}`;
+                statusDiv.className = "status error";
+            } finally {
+                btn.disabled = false;
+                loader.style.display = "none";
+            }
+        }
+    </script>
+</body>
+</html>
+
