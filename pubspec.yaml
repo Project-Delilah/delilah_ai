@@ -2,7 +2,7 @@ name: delilah
 description: "Project Delilah - AI Image Generation & Virtual Try-On"
 publish_to: 'none'
 
-version: 1.0.0+1
+version: 1.0.1+1
 
 environment:
   sdk: ^3.11.5
@@ -23,6 +23,7 @@ dependencies:
 
   path_provider: ^2.1.3
   flutter_secure_storage: ^9.2.2
+  gal: ^2.3.0
 
   image_picker: ^1.1.0
 

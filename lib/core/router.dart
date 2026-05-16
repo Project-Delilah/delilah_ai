@@ -28,7 +28,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         routes: [
           GoRoute(path: '/generate', builder: (_, __) => const ImageGenScreen()),
           GoRoute(path: '/tryon', builder: (_, __) => const TryonScreen()),
-          GoRoute(path: '/history', builder: (_, __) => const HistoryScreen()),
+          GoRoute(path: '/history', builder: (_, __) => const GalleryScreen()),
         ],
       ),
     ],
@@ -56,7 +56,7 @@ class AppShell extends ConsumerWidget {
               children: [
                 _NavItem(icon: Icons.auto_awesome, label: 'Generate', isSelected: _isSelected(context, '/generate'), onTap: () => context.go('/generate')),
                 _NavItem(icon: Icons.checkroom, label: 'Try-On', isSelected: _isSelected(context, '/tryon'), onTap: () => context.go('/tryon')),
-                _NavItem(icon: Icons.history, label: 'History', isSelected: _isSelected(context, '/history'), onTap: () => context.go('/history')),
+                _NavItem(icon: Icons.photo_library, label: 'Gallery', isSelected: _isSelected(context, '/history'), onTap: () => context.go('/history')),
                 _NavItem(icon: Icons.logout, label: 'Logout', isSelected: false, onTap: () {
                   showDialog(
                     context: context,
