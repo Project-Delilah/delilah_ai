@@ -110,34 +110,43 @@ class HomeScreen extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: const BoxDecoration(
-          color: AppColors.canvasWhite,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              margin: const EdgeInsets.only(bottom: AppSpacing.lg),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.hairline,
-                borderRadius: BorderRadius.circular(2),
-              ),
+      isScrollControlled: true,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.4,
+        builder: (_, controller) => Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: const BoxDecoration(
+            color: AppColors.canvasWhite,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SingleChildScrollView(
+            controller: controller,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.hairline,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Text('All AI Tools', style: AppTextStyles.titleMedium),
+                const SizedBox(height: AppSpacing.lg),
+                _ToolTile(icon: Icons.auto_awesome, label: 'Generate Image', onTap: () { Navigator.pop(ctx); context.go('/generate'); }),
+                _ToolTile(icon: Icons.checkroom, label: 'Virtual Try-On', onTap: () { Navigator.pop(ctx); context.go('/tryon'); }),
+                _ToolTile(icon: Icons.edit, label: 'Edit Image', onTap: () { Navigator.pop(ctx); context.go('/edit'); }),
+                _ToolTile(icon: Icons.zoom_in, label: 'Upscale', onTap: () { Navigator.pop(ctx); context.go('/upscale'); }),
+                _ToolTile(icon: Icons.store, label: 'Product Makeover', onTap: () { Navigator.pop(ctx); context.go('/product-makeover'); }),
+                _ToolTile(icon: Icons.restore, label: 'Fix Old Image', onTap: () { Navigator.pop(ctx); context.go('/fixoldimage'); }),
+                const SizedBox(height: AppSpacing.md),
+              ],
             ),
-            Text('All AI Tools', style: AppTextStyles.titleMedium),
-            const SizedBox(height: AppSpacing.lg),
-            _ToolTile(icon: Icons.auto_awesome, label: 'Generate Image', onTap: () { Navigator.pop(ctx); context.go('/generate'); }),
-            _ToolTile(icon: Icons.checkroom, label: 'Virtual Try-On', onTap: () { Navigator.pop(ctx); context.go('/tryon'); }),
-            _ToolTile(icon: Icons.edit, label: 'Edit Image', onTap: () { Navigator.pop(ctx); context.go('/edit'); }),
-            _ToolTile(icon: Icons.zoom_in, label: 'Upscale', onTap: () { Navigator.pop(ctx); context.go('/upscale'); }),
-            _ToolTile(icon: Icons.store, label: 'Product Makeover', onTap: () { Navigator.pop(ctx); context.go('/product-makeover'); }),
-            _ToolTile(icon: Icons.restore, label: 'Fix Old Image', onTap: () { Navigator.pop(ctx); context.go('/fixoldimage'); }),
-            const SizedBox(height: AppSpacing.md),
-          ],
+          ),
         ),
       ),
     );
