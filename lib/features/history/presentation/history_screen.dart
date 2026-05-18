@@ -203,11 +203,11 @@ class _GalleryGrid extends StatelessWidget {
 
     return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: AppSpacing.sm,
-        mainAxisSpacing: AppSpacing.sm,
-        childAspectRatio: 0.75,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: AppSpacing.xs,
+        mainAxisSpacing: AppSpacing.xs,
+        childAspectRatio: 0.6,
       ),
       itemCount: filtered.length,
       itemBuilder: (context, index) {
@@ -227,7 +227,10 @@ class _GalleryTile extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: () => _showDetailSheet(context, ref),
-      child: _MediaCard(item: item),
+      child: AspectRatio(
+        aspectRatio: item.isVideo ? item.aspectRatio.value : 1.0,
+        child: _MediaCard(item: item),
+      ),
     );
   }
 
@@ -330,15 +333,13 @@ class _MediaDetailSheetState extends ConsumerState<_MediaDetailSheet> {
                     const SizedBox(height: AppSpacing.lg),
                   ],
                   if (widget.item.isVideo)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 300,
-                        child: VideoPlayerWidget(
-                          videoUrl: widget.item.url,
-                          autoPlay: true,
-                        ),
+                    SizedBox(
+                      width: double.infinity,
+                      height: widget.item.aspectRatio.displayHeight,
+                      child: VideoPlayerWidget(
+                        videoUrl: widget.item.url,
+                        autoPlay: true,
+                        aspectRatio: widget.item.aspectRatio,
                       ),
                     )
                   else
