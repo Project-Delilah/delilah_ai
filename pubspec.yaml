@@ -29,6 +29,8 @@ dependencies:
 
   shimmer: ^3.0.0
   cached_network_image: ^3.3.1
+  better_player_plus: ^1.2.1
+  video_player: ^2.9.2
 
 dev_dependencies:
   flutter_test:

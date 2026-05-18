@@ -11,6 +11,7 @@ import '../features/endpoints/image_edit/presentation/image_edit_screen.dart';
 import '../features/endpoints/upscale/presentation/upscale_screen.dart';
 import '../features/endpoints/product_makeover/presentation/product_makeover_screen.dart';
 import '../features/endpoints/fix_old_image/presentation/fix_old_image_screen.dart';
+import '../features/endpoints/video_generation/presentation/video_gen_screen.dart';
 import '../features/history/presentation/history_screen.dart';
 import 'theme/theme_controller.dart';
 
@@ -49,6 +50,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(path: '/upscale', builder: (_, __) => const UpscaleScreen()),
           GoRoute(path: '/product-makeover', builder: (_, __) => const ProductMakeoverScreen()),
           GoRoute(path: '/fixoldimage', builder: (_, __) => const FixOldImageScreen()),
+          GoRoute(path: '/video-gen', builder: (_, __) => const VideoGenScreen()),
           GoRoute(path: '/history', builder: (_, __) => const GalleryScreen()),
         ],
       ),
@@ -76,7 +78,7 @@ class AppShell extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _NavItem(icon: Icons.home, label: 'Home', isSelected: _isSelected(context, '/home'), onTap: () => context.go('/home')),
-                _NavItem(icon: Icons.more_horiz, label: 'Tools', isSelected: _isSelected(context, '/generate') || _isSelected(context, '/tryon') || _isSelected(context, '/edit') || _isSelected(context, '/upscale') || _isSelected(context, '/product-makeover') || _isSelected(context, '/fixoldimage'), onTap: () => _showToolsMenu(context)),
+                _NavItem(icon: Icons.more_horiz, label: 'Tools', isSelected: _isSelected(context, '/generate') || _isSelected(context, '/tryon') || _isSelected(context, '/edit') || _isSelected(context, '/upscale') || _isSelected(context, '/product-makeover') || _isSelected(context, '/fixoldimage') || _isSelected(context, '/video-gen'), onTap: () => _showToolsMenu(context)),
                 _NavItem(icon: Icons.photo_library, label: 'Gallery', isSelected: _isSelected(context, '/history'), onTap: () => context.go('/history')),
                 _NavItem(icon: Icons.logout, label: 'Logout', isSelected: false, onTap: () {
                   showDialog(
@@ -139,6 +141,8 @@ class AppShell extends ConsumerWidget {
             _ToolTile(icon: Icons.zoom_in, label: 'Upscale', onTap: () { Navigator.pop(ctx); context.go('/upscale'); }),
             _ToolTile(icon: Icons.store, label: 'Product Makeover', onTap: () { Navigator.pop(ctx); context.go('/product-makeover'); }),
             _ToolTile(icon: Icons.restore, label: 'Fix Old Image', onTap: () { Navigator.pop(ctx); context.go('/fixoldimage'); }),
+            const Divider(),
+            _ToolTile(icon: Icons.videocam, label: 'Video Generation', onTap: () { Navigator.pop(ctx); context.go('/video-gen'); }),
             const SizedBox(height: AppSpacing.md),
           ],
         ),
