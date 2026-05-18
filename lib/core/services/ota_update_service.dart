@@ -31,12 +31,15 @@ class OtaUpdateService {
   static const String _githubRepo = 'Project-Delilah/delilah_ai';
   static const String _githubApiUrl = 'https://api.github.com/repos/$_githubRepo/releases/latest';
 
-  String get _currentVersion {
-    return const String.fromEnvironment('APP_VERSION', defaultValue: '1.0.0');
-  }
+  static const String _currentVersion = '1.0.18';
+
+  String get currentVersion => _currentVersion;
 
   Future<UpdateInfo?> checkForUpdate() async {
     try {
+      debugPrint('OTA: Checking for updates...');
+      debugPrint('OTA: Current version: $_currentVersion');
+
       final response = await _dio.get(
         _githubApiUrl,
         options: Options(
@@ -50,17 +53,21 @@ class OtaUpdateService {
       if (response.statusCode == 200 && response.data != null) {
         final data = response.data;
         final latestVersion = _extractVersion(data['tag_name'] ?? '');
-        
+        debugPrint('OTA: Latest release: ${data['tag_name']} ($latestVersion)');
+
         if (_compareVersions(latestVersion, _currentVersion) > 0) {
+          debugPrint('OTA: Update available!');
           final assets = data['assets'] as List? ?? [];
           String? downloadUrl;
           int sizeBytes = 0;
-          
+
           for (final asset in assets) {
             final name = asset['name']?.toString() ?? '';
+            debugPrint('OTA: Asset: $name');
             if (name.contains('armeabi-v7a') || name.contains('arm64-v8a')) {
               downloadUrl = asset['browser_download_url'];
               sizeBytes = asset['size'] ?? 0;
+              debugPrint('OTA: Found matching APK: $downloadUrl');
               break;
             }
           }
@@ -75,11 +82,13 @@ class OtaUpdateService {
               sizeBytes: sizeBytes,
             );
           }
+        } else {
+          debugPrint('OTA: No update needed');
         }
       }
       return null;
     } catch (e) {
-      debugPrint('Update check failed: $e');
+      debugPrint('OTA: Update check failed: $e');
       return null;
     }
   }

@@ -14,26 +14,12 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  bool _hasCheckedUpdate = false;
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _checkForUpdates();
+      ref.read(updateNotifierProvider.notifier).checkForUpdate();
     });
-  }
-
-  Future<void> _checkForUpdates() async {
-    if (_hasCheckedUpdate) return;
-    _hasCheckedUpdate = true;
-
-    await ref.read(updateNotifierProvider.notifier).checkForUpdate();
-    final state = ref.read(updateNotifierProvider);
-    
-    if (state.updateInfo != null && mounted) {
-      _showUpdateDialog(state);
-    }
   }
 
   void _showUpdateDialog(UpdateState state) {
@@ -51,6 +37,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final updateState = ref.watch(updateNotifierProvider);
+
+    ref.listen(updateNotifierProvider, (prev, next) {
+      if (next.updateInfo != null && next.hasChecked && (prev?.updateInfo == null)) {
+        _showUpdateDialog(next);
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppColors.canvasWhite,
