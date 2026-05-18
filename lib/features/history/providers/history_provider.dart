@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import '../../../core/config.dart';
 import '../../../core/services/secure_storage.dart';
+import '../../../shared/widgets/video_player_widget.dart';
 
 enum MediaType { image, video }
 
@@ -11,6 +12,7 @@ class GalleryImage {
   final DateTime createdAt;
   final String? publicId;
   final MediaType type;
+  final VideoAspectRatio aspectRatio;
 
   GalleryImage({
     required this.url, 
@@ -18,11 +20,13 @@ class GalleryImage {
     required this.createdAt, 
     this.publicId,
     this.type = MediaType.image,
+    this.aspectRatio = VideoAspectRatio.portrait9x16,
   });
 
   factory GalleryImage.fromJson(Map<String, dynamic> json) {
     final url = json['secure_url'] ?? json['url'] ?? '';
     final type = _detectMediaType(url);
+    final aspectRatio = _detectAspectRatio(json);
     
     return GalleryImage(
       url: url,
@@ -32,6 +36,7 @@ class GalleryImage {
           : DateTime.now(),
       publicId: json['public_id'],
       type: type,
+      aspectRatio: aspectRatio,
     );
   }
 
@@ -45,6 +50,21 @@ class GalleryImage {
       return MediaType.video;
     }
     return MediaType.image;
+  }
+
+  static VideoAspectRatio _detectAspectRatio(Map<String, dynamic> json) {
+    if (json['aspect_ratio'] != null) {
+      final ratio = json['aspect_ratio'].toString();
+      if (ratio == '16:9') return VideoAspectRatio.landscape16x9;
+      if (ratio == '9:16') return VideoAspectRatio.portrait9x16;
+    }
+    
+    final publicId = json['public_id']?.toString().toLowerCase() ?? '';
+    if (publicId.contains('16x9') || publicId.contains('landscape')) {
+      return VideoAspectRatio.landscape16x9;
+    }
+    
+    return VideoAspectRatio.portrait9x16;
   }
 
   bool get isVideo => type == MediaType.video;

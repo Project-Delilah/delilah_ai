@@ -2,11 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../../core/theme/theme_controller.dart';
 
+enum VideoAspectRatio { portrait9x16, landscape16x9, square }
+
+extension VideoAspectRatioExtension on VideoAspectRatio {
+  double get value {
+    switch (this) {
+      case VideoAspectRatio.portrait9x16:
+        return 9 / 16;
+      case VideoAspectRatio.landscape16x9:
+        return 16 / 9;
+      case VideoAspectRatio.square:
+        return 1.0;
+    }
+  }
+
+  double get displayHeight {
+    switch (this) {
+      case VideoAspectRatio.portrait9x16:
+        return 300;
+      case VideoAspectRatio.landscape16x9:
+        return 200;
+      case VideoAspectRatio.square:
+        return 250;
+    }
+  }
+}
+
 class VideoPlayerWidget extends StatefulWidget {
   final String videoUrl;
   final double? height;
   final bool autoPlay;
   final bool showControls;
+  final VideoAspectRatio? aspectRatio;
 
   const VideoPlayerWidget({
     super.key,
@@ -14,6 +41,7 @@ class VideoPlayerWidget extends StatefulWidget {
     this.height,
     this.autoPlay = true,
     this.showControls = true,
+    this.aspectRatio,
   });
 
   @override
@@ -24,10 +52,12 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   late VideoPlayerController _controller;
   bool _isInitialized = false;
   bool _hasError = false;
+  late VideoAspectRatio _aspectRatio;
 
   @override
   void initState() {
     super.initState();
+    _aspectRatio = widget.aspectRatio ?? VideoAspectRatio.portrait9x16;
     _initializePlayer();
   }
 
@@ -36,14 +66,17 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
     
     try {
       await _controller.initialize();
-      if (widget.autoPlay) {
-        _controller.play();
-        _controller.setLooping(true);
-      }
+      
       if (mounted) {
         setState(() {
           _isInitialized = true;
+          _aspectRatio = _getAspectRatioFromController();
         });
+      }
+      
+      if (widget.autoPlay) {
+        _controller.play();
+        _controller.setLooping(true);
       }
     } catch (e) {
       if (mounted) {
@@ -52,6 +85,13 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
         });
       }
     }
+  }
+
+  VideoAspectRatio _getAspectRatioFromController() {
+    final aspectRatio = _controller.value.aspectRatio;
+    if (aspectRatio < 0.8) return VideoAspectRatio.portrait9x16;
+    if (aspectRatio > 1.2) return VideoAspectRatio.landscape16x9;
+    return VideoAspectRatio.square;
   }
 
   @override
@@ -64,7 +104,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
   Widget build(BuildContext context) {
     if (_hasError) {
       return Container(
-        height: widget.height ?? 300,
+        height: _aspectRatio.displayHeight,
         color: AppColors.softStone,
         child: const Center(
           child: Column(
@@ -81,7 +121,7 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
     if (!_isInitialized) {
       return Container(
-        height: widget.height ?? 300,
+        height: widget.height ?? _aspectRatio.displayHeight,
         color: AppColors.ink,
         child: const Center(
           child: CircularProgressIndicator(color: AppColors.canvasWhite),
@@ -89,17 +129,20 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       );
     }
 
-    return SizedBox(
-      height: widget.height,
+    return Container(
+      height: widget.height ?? _aspectRatio.displayHeight,
       width: double.infinity,
-      child: AspectRatio(
-        aspectRatio: _controller.value.aspectRatio,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            VideoPlayer(_controller),
-            if (widget.showControls) _VideoControls(controller: _controller),
-          ],
+      color: AppColors.ink,
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: _aspectRatio.value,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              VideoPlayer(_controller),
+              if (widget.showControls) _VideoControls(controller: _controller),
+            ],
+          ),
         ),
       ),
     );
@@ -221,6 +264,7 @@ class VideoThumbnail extends StatelessWidget {
   final double height;
   final double? width;
   final VoidCallback? onTap;
+  final VideoAspectRatio aspectRatio;
 
   const VideoThumbnail({
     super.key,
@@ -228,14 +272,31 @@ class VideoThumbnail extends StatelessWidget {
     this.height = 120,
     this.width,
     this.onTap,
+    this.aspectRatio = VideoAspectRatio.portrait9x16,
   });
+
+  String _getCloudinaryThumbnailUrl(String videoUrl) {
+    if (videoUrl.contains('cloudinary.com')) {
+      try {
+        final parts = videoUrl.split('/upload/');
+        if (parts.length == 2) {
+          final transforms = 'so_0,vc_auto';
+          return '${parts[0]}/upload/$transforms/${parts[1]}';
+        }
+      } catch (_) {}
+    }
+    return videoUrl;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final displayHeight = aspectRatio == VideoAspectRatio.portrait9x16 ? height * 1.4 : height;
+    final thumbnailUrl = _getCloudinaryThumbnailUrl(videoUrl);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: height,
+        height: displayHeight,
         width: width,
         decoration: BoxDecoration(
           color: AppColors.softStone,
@@ -246,7 +307,7 @@ class VideoThumbnail extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             Image.network(
-              videoUrl,
+              thumbnailUrl,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) => Container(
                 color: AppColors.ink,
@@ -281,14 +342,14 @@ class VideoThumbnail extends StatelessWidget {
                   color: AppColors.cohereBlack.withValues(alpha: 0.7),
                   borderRadius: BorderRadius.circular(4),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.videocam, color: AppColors.canvasWhite, size: 12),
-                    SizedBox(width: 2),
+                    const Icon(Icons.videocam, color: AppColors.canvasWhite, size: 12),
+                    const SizedBox(width: 2),
                     Text(
-                      'VIDEO',
-                      style: TextStyle(
+                      aspectRatio == VideoAspectRatio.portrait9x16 ? '9:16' : '16:9',
+                      style: const TextStyle(
                         color: AppColors.canvasWhite,
                         fontSize: 9,
                         fontWeight: FontWeight.w600,

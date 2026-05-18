@@ -258,7 +258,10 @@ class _MediaCard extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           if (item.isVideo)
-            VideoThumbnail(videoUrl: item.url)
+            VideoThumbnail(
+              videoUrl: item.url,
+              aspectRatio: item.aspectRatio,
+            )
           else
             CachedNetworkImage(
               imageUrl: item.url,
