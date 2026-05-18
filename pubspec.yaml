@@ -48,6 +48,7 @@ flutter_launcher_icons:
   image_path_android: "assets/android-flutter-icon-full.png"
   adaptive_icon_background: "assets/android-flutter-icon-background.png"
   adaptive_icon_foreground: "assets/android-flutter-icon.png"
+  adaptive_icon_monochrome: "assets/android-flutter-bp-monochrome.png"
 
 flutter:
   uses-material-design: true
