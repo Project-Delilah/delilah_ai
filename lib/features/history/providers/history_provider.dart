@@ -80,6 +80,19 @@ class GalleryImage {
 
   bool get isVideo => type == MediaType.video;
   bool get isImage => type == MediaType.image;
+
+  String? get publicIdFromUrl {
+    if (!url.contains('cloudinary.com')) return null;
+    try {
+      final parts = url.split('/upload/');
+      if (parts.length < 2) return null;
+      String path = parts[1];
+      path = path.replaceAll(RegExp(r'\.(mp4|jpg|jpeg|png|webp|mov)$'), '');
+      return path;
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
 class GalleryNotifier extends AsyncNotifier<List<GalleryImage>> {
@@ -161,10 +174,13 @@ class GalleryNotifier extends AsyncNotifier<List<GalleryImage>> {
     }
   }
 
-  Future<bool> deleteImage(String publicId) async {
+  Future<bool> deleteImage(String? publicId, {String? url}) async {
     try {
       final token = await SecureStorage.getToken();
       if (token == null || token.isEmpty) return false;
+
+      final effectivePublicId = publicId ?? (url != null ? _extractPublicIdFromUrl(url) : null);
+      if (effectivePublicId == null) return false;
 
       final dio = Dio(BaseOptions(
         baseUrl: AppConfig.apiBaseUrl,
@@ -173,16 +189,30 @@ class GalleryNotifier extends AsyncNotifier<List<GalleryImage>> {
         },
       ));
 
-      await dio.delete('/gallery', data: {'public_id': publicId});
+      await dio.delete('/gallery', data: {'public_id': effectivePublicId});
       
       final currentImages = state.valueOrNull ?? [];
-      final updatedImages = currentImages.where((img) => img.publicId != publicId).toList();
+      final updatedImages = currentImages.where((img) => 
+        img.publicId != effectivePublicId && img.publicIdFromUrl != effectivePublicId
+      ).toList();
       state = AsyncData(updatedImages);
       await _saveToCache(updatedImages);
       
       return true;
     } catch (e) {
       return false;
+    }
+  }
+
+  String? _extractPublicIdFromUrl(String url) {
+    try {
+      final parts = url.split('/upload/');
+      if (parts.length < 2) return null;
+      String path = parts[1];
+      path = path.replaceAll(RegExp(r'\.(mp4|jpg|jpeg|png|webp|mov)$'), '');
+      return path;
+    } catch (_) {
+      return null;
     }
   }
 

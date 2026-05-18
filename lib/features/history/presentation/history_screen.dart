@@ -533,18 +533,10 @@ class _DeleteButton extends StatelessWidget {
     );
 
     if (confirm == true) {
-      if (item.publicId == null) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Cannot delete: missing ID'),
-              backgroundColor: AppColors.errorRed,
-            ),
-          );
-        }
-        return;
-      }
-      final success = await ref.read(galleryNotifierProvider.notifier).deleteImage(item.publicId!);
+      final success = await ref.read(galleryNotifierProvider.notifier).deleteImage(
+        item.publicId,
+        url: item.url,
+      );
       if (context.mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
