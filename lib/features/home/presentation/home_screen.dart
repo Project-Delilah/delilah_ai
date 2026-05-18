@@ -38,7 +38,7 @@ class HomeScreen extends ConsumerWidget {
                     const SizedBox(height: AppSpacing.lg),
                     Text('Delilah', style: AppTextStyles.displayLarge.copyWith(color: AppColors.cohereBlack)),
                     const SizedBox(height: AppSpacing.sm),
-                    Text('AI Image Studio', style: AppTextStyles.titleMedium.copyWith(color: AppColors.mutedSlate)),
+                    Text('AI Media Studio', style: AppTextStyles.titleMedium.copyWith(color: AppColors.mutedSlate)),
                   ],
                 ),
               ),
@@ -59,9 +59,9 @@ class HomeScreen extends ConsumerWidget {
                   children: [
                     const Icon(Icons.shield, color: Colors.white, size: 32),
                     const SizedBox(height: AppSpacing.md),
-                    Text('AI-Powered Image Tools', style: AppTextStyles.titleLarge.copyWith(color: Colors.white)),
+                    Text('AI-Powered Media Tools', style: AppTextStyles.titleLarge.copyWith(color: Colors.white)),
                     const SizedBox(height: AppSpacing.sm),
-                    Text('Generate stunning images, try on virtual clothes, upscale photos, and more.', 
+                    Text('Generate stunning images, create videos from text or images, try on virtual clothes, and more.', 
                          style: AppTextStyles.bodyMedium.copyWith(color: Colors.white70)),
                   ],
                 ),
@@ -84,16 +84,17 @@ class HomeScreen extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.sm),
               _QuickActionCard(
-                icon: Icons.edit,
-                title: 'Edit Image',
-                description: 'Apply filters and modifications',
-                onTap: () => context.go('/edit'),
+                icon: Icons.videocam,
+                title: 'Video Generation',
+                description: 'Create videos from text or images',
+                onTap: () => context.go('/video-gen'),
+                isNew: true,
               ),
               const SizedBox(height: AppSpacing.sm),
               _QuickActionCard(
                 icon: Icons.photo_library,
                 title: 'Gallery',
-                description: 'View your generated images',
+                description: 'View your generated media',
                 onTap: () => context.go('/history'),
               ),
               const SizedBox(height: AppSpacing.xl),
@@ -117,7 +118,7 @@ class HomeScreen extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
+        initialChildSize: 0.7,
         maxChildSize: 0.9,
         minChildSize: 0.4,
         builder: (_, controller) => Container(
@@ -142,16 +143,42 @@ class HomeScreen extends ConsumerWidget {
                 ),
                 Text('All AI Tools', style: AppTextStyles.titleMedium),
                 const SizedBox(height: AppSpacing.lg),
+                _SectionHeader(title: 'Image Generation'),
                 _ToolTile(icon: Icons.auto_awesome, label: 'Generate Image', onTap: () { Navigator.pop(ctx); context.go('/generate'); }),
                 _ToolTile(icon: Icons.checkroom, label: 'Virtual Try-On', onTap: () { Navigator.pop(ctx); context.go('/tryon'); }),
+                const Divider(height: AppSpacing.lg),
+                _SectionHeader(title: 'Video Generation'),
+                _ToolTile(icon: Icons.videocam, label: 'Video Generation', onTap: () { Navigator.pop(ctx); context.go('/video-gen'); }),
+                const Divider(height: AppSpacing.lg),
+                _SectionHeader(title: 'Image Editing'),
                 _ToolTile(icon: Icons.edit, label: 'Edit Image', onTap: () { Navigator.pop(ctx); context.go('/edit'); }),
                 _ToolTile(icon: Icons.zoom_in, label: 'Upscale', onTap: () { Navigator.pop(ctx); context.go('/upscale'); }),
                 _ToolTile(icon: Icons.store, label: 'Product Makeover', onTap: () { Navigator.pop(ctx); context.go('/product-makeover'); }),
                 _ToolTile(icon: Icons.restore, label: 'Fix Old Image', onTap: () { Navigator.pop(ctx); context.go('/fixoldimage'); }),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.lg),
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  const _SectionHeader({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Text(
+        title.toUpperCase(),
+        style: AppTextStyles.bodySmall.copyWith(
+          color: AppColors.mutedSlate,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1.2,
         ),
       ),
     );
@@ -163,8 +190,15 @@ class _QuickActionCard extends StatelessWidget {
   final String title;
   final String description;
   final VoidCallback onTap;
+  final bool isNew;
 
-  const _QuickActionCard({required this.icon, required this.title, required this.description, required this.onTap});
+  const _QuickActionCard({
+    required this.icon, 
+    required this.title, 
+    required this.description, 
+    required this.onTap,
+    this.isNew = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +227,29 @@ class _QuickActionCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: AppTextStyles.bodyLarge),
+                  Row(
+                    children: [
+                      Text(title, style: AppTextStyles.bodyLarge),
+                      if (isNew) ...[
+                        const SizedBox(width: AppSpacing.sm),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppColors.actionBlue,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'NEW',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                   Text(description, style: AppTextStyles.bodySmall.copyWith(color: AppColors.mutedSlate)),
                 ],
               ),

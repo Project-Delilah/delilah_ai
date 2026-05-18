@@ -2,7 +2,7 @@ name: delilah
 description: "Project Delilah - AI Image Generation & Virtual Try-On"
 publish_to: 'none'
 
-version: 1.0.10+1
+version: 1.0.11+1
 
 environment:
   sdk: ^3.11.5

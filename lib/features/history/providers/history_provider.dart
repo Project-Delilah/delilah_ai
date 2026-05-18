@@ -3,24 +3,52 @@ import 'package:dio/dio.dart';
 import '../../../core/config.dart';
 import '../../../core/services/secure_storage.dart';
 
+enum MediaType { image, video }
+
 class GalleryImage {
   final String url;
   final String? prompt;
   final DateTime createdAt;
   final String? publicId;
+  final MediaType type;
 
-  GalleryImage({required this.url, this.prompt, required this.createdAt, this.publicId});
+  GalleryImage({
+    required this.url, 
+    this.prompt, 
+    required this.createdAt, 
+    this.publicId,
+    this.type = MediaType.image,
+  });
 
   factory GalleryImage.fromJson(Map<String, dynamic> json) {
+    final url = json['secure_url'] ?? json['url'] ?? '';
+    final type = _detectMediaType(url);
+    
     return GalleryImage(
-      url: json['secure_url'] ?? json['url'] ?? '',
+      url: url,
       prompt: json['prompt'],
       createdAt: json['created_at'] != null 
           ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
       publicId: json['public_id'],
+      type: type,
     );
   }
+
+  static MediaType _detectMediaType(String url) {
+    final lowerUrl = url.toLowerCase();
+    if (lowerUrl.contains('/video/') || 
+        lowerUrl.endsWith('.mp4') || 
+        lowerUrl.endsWith('.mov') ||
+        lowerUrl.endsWith('.webm') ||
+        lowerUrl.contains('veo_studio')) {
+      return MediaType.video;
+    }
+    return MediaType.image;
+  }
+
+  bool get isVideo => type == MediaType.video;
+  bool get isImage => type == MediaType.image;
 }
 
 class GalleryNotifier extends AsyncNotifier<List<GalleryImage>> {
