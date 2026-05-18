@@ -333,14 +333,10 @@ class _MediaDetailSheetState extends ConsumerState<_MediaDetailSheet> {
                     const SizedBox(height: AppSpacing.lg),
                   ],
                   if (widget.item.isVideo)
-                    SizedBox(
-                      width: double.infinity,
-                      height: widget.item.aspectRatio.displayHeight,
-                      child: VideoPlayerWidget(
-                        videoUrl: widget.item.url,
-                        autoPlay: true,
-                        aspectRatio: widget.item.aspectRatio,
-                      ),
+                    VideoPlayerWidget(
+                      videoUrl: widget.item.url,
+                      autoPlay: true,
+                      aspectRatio: widget.item.aspectRatio,
                     )
                   else
                     ClipRRect(

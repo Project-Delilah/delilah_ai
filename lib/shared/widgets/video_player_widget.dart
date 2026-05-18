@@ -26,6 +26,16 @@ extension VideoAspectRatioExtension on VideoAspectRatio {
         return 250;
     }
   }
+  double get displayWidth {
+    switch (this) {
+      case VideoAspectRatio.portrait9x16:
+        return 170;
+      case VideoAspectRatio.landscape16x9:
+        return 320;
+      case VideoAspectRatio.square:
+        return 250;
+    }
+  }
 }
 
 class VideoPlayerWidget extends StatefulWidget {
@@ -63,17 +73,17 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
 
   Future<void> _initializePlayer() async {
     _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl));
-    
+
     try {
       await _controller.initialize();
-      
+
       if (mounted) {
         setState(() {
           _isInitialized = true;
           _aspectRatio = _getAspectRatioFromController();
         });
       }
-      
+
       if (widget.autoPlay) {
         _controller.play();
         _controller.setLooping(true);
@@ -129,22 +139,39 @@ class _VideoPlayerWidgetState extends State<VideoPlayerWidget> {
       );
     }
 
-    return Container(
-      height: widget.height ?? _aspectRatio.displayHeight,
-      width: double.infinity,
-      color: AppColors.ink,
-      child: Center(
-        child: AspectRatio(
-          aspectRatio: _aspectRatio.value,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              VideoPlayer(_controller),
-              if (widget.showControls) _VideoControls(controller: _controller),
-            ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth;
+        final maxHeight = widget.height ?? constraints.maxHeight;
+        
+        double videoWidth;
+        double videoHeight;
+        
+        if (_aspectRatio.value > maxWidth / maxHeight) {
+          videoWidth = maxWidth;
+          videoHeight = maxWidth / _aspectRatio.value;
+        } else {
+          videoHeight = maxHeight;
+          videoWidth = maxHeight * _aspectRatio.value;
+        }
+        
+        return Container(
+          color: AppColors.ink,
+          child: Center(
+            child: SizedBox(
+              width: videoWidth,
+              height: videoHeight,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  VideoPlayer(_controller),
+                  if (widget.showControls) _VideoControls(controller: _controller),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
