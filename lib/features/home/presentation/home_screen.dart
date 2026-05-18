@@ -3,12 +3,55 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/theme_controller.dart';
 import '../../../shared/widgets/glass_button.dart';
+import '../../../shared/widgets/update_dialog.dart';
+import '../providers/update_provider.dart';
 
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  bool _hasCheckedUpdate = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkForUpdates();
+    });
+  }
+
+  Future<void> _checkForUpdates() async {
+    if (_hasCheckedUpdate) return;
+    _hasCheckedUpdate = true;
+
+    await ref.read(updateNotifierProvider.notifier).checkForUpdate();
+    final state = ref.read(updateNotifierProvider);
+    
+    if (state.updateInfo != null && mounted) {
+      _showUpdateDialog(state);
+    }
+  }
+
+  void _showUpdateDialog(UpdateState state) {
+    showDialog(
+      context: context,
+      barrierDismissible: !state.updateInfo!.isForced,
+      builder: (ctx) => UpdateDialog(
+        updateInfo: state.updateInfo!,
+        onLater: () => Navigator.pop(ctx),
+        onUpdate: () {},
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final updateState = ref.watch(updateNotifierProvider);
+
     return Scaffold(
       backgroundColor: AppColors.canvasWhite,
       body: SafeArea(
@@ -43,6 +86,7 @@ class HomeScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: AppSpacing.xl),
+              _buildUpdateBanner(updateState),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppSpacing.xl),
@@ -112,73 +156,98 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 
+  Widget _buildUpdateBanner(UpdateState state) {
+    if (state.updateInfo == null && !state.isChecking) return const SizedBox.shrink();
+    if (state.updateInfo == null) return const SizedBox.shrink();
+
+    return GestureDetector(
+      onTap: () => _showUpdateDialog(state),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: AppSpacing.lg),
+        padding: const EdgeInsets.all(AppSpacing.md),
+        decoration: BoxDecoration(
+          color: AppColors.actionBlue.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          border: Border.all(color: AppColors.actionBlue.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.system_update_alt, color: AppColors.actionBlue),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Update available: v${state.updateInfo!.version}',
+                    style: AppTextStyles.bodyMedium.copyWith(color: AppColors.actionBlue),
+                  ),
+                  Text(
+                    state.updateInfo!.sizeFormatted,
+                    style: AppTextStyles.bodySmall.copyWith(color: AppColors.mutedSlate),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: AppColors.actionBlue),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showAllTools(BuildContext context) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.7,
-        maxChildSize: 0.9,
-        minChildSize: 0.4,
-        builder: (_, controller) => Container(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          decoration: const BoxDecoration(
-            color: AppColors.canvasWhite,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: SingleChildScrollView(
-            controller: controller,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(bottom: AppSpacing.lg),
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppColors.hairline,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                Text('All AI Tools', style: AppTextStyles.titleMedium),
-                const SizedBox(height: AppSpacing.lg),
-                _SectionHeader(title: 'Image Generation'),
-                _ToolTile(icon: Icons.auto_awesome, label: 'Generate Image', onTap: () { Navigator.pop(ctx); context.go('/generate'); }),
-                _ToolTile(icon: Icons.checkroom, label: 'Virtual Try-On', onTap: () { Navigator.pop(ctx); context.go('/tryon'); }),
-                const Divider(height: AppSpacing.lg),
-                _SectionHeader(title: 'Video Generation'),
-                _ToolTile(icon: Icons.videocam, label: 'Video Generation', onTap: () { Navigator.pop(ctx); context.go('/video-gen'); }),
-                const Divider(height: AppSpacing.lg),
-                _SectionHeader(title: 'Image Editing'),
-                _ToolTile(icon: Icons.edit, label: 'Edit Image', onTap: () { Navigator.pop(ctx); context.go('/edit'); }),
-                _ToolTile(icon: Icons.zoom_in, label: 'Upscale', onTap: () { Navigator.pop(ctx); context.go('/upscale'); }),
-                _ToolTile(icon: Icons.store, label: 'Product Makeover', onTap: () { Navigator.pop(ctx); context.go('/product-makeover'); }),
-                _ToolTile(icon: Icons.restore, label: 'Fix Old Image', onTap: () { Navigator.pop(ctx); context.go('/fixoldimage'); }),
-                const SizedBox(height: AppSpacing.lg),
-              ],
-            ),
-          ),
+      builder: (ctx) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: const BoxDecoration(
+          color: AppColors.canvasWhite,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
-      ),
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  const _SectionHeader({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Text(
-        title.toUpperCase(),
-        style: AppTextStyles.bodySmall.copyWith(
-          color: AppColors.mutedSlate,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 1.2,
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.only(top: 12),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.hairline,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(AppSpacing.lg),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('AI Tools', style: AppTextStyles.titleMedium),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text('IMAGE', style: AppTextStyles.bodySmall.copyWith(color: AppColors.mutedSlate, fontWeight: FontWeight.w600, letterSpacing: 1.2)),
+                    const SizedBox(height: AppSpacing.sm),
+                    _ToolTile(icon: Icons.auto_awesome, label: 'Generate Image', onTap: () { Navigator.pop(ctx); context.go('/generate'); }),
+                    _ToolTile(icon: Icons.checkroom, label: 'Virtual Try-On', onTap: () { Navigator.pop(ctx); context.go('/tryon'); }),
+                    const SizedBox(height: AppSpacing.md),
+                    Text('VIDEO', style: AppTextStyles.bodySmall.copyWith(color: AppColors.mutedSlate, fontWeight: FontWeight.w600, letterSpacing: 1.2)),
+                    const SizedBox(height: AppSpacing.sm),
+                    _ToolTile(icon: Icons.videocam, label: 'Video Generation', onTap: () { Navigator.pop(ctx); context.go('/video-gen'); }),
+                    const SizedBox(height: AppSpacing.md),
+                    Text('EDITING', style: AppTextStyles.bodySmall.copyWith(color: AppColors.mutedSlate, fontWeight: FontWeight.w600, letterSpacing: 1.2)),
+                    const SizedBox(height: AppSpacing.sm),
+                    _ToolTile(icon: Icons.edit, label: 'Edit Image', onTap: () { Navigator.pop(ctx); context.go('/edit'); }),
+                    _ToolTile(icon: Icons.zoom_in, label: 'Upscale', onTap: () { Navigator.pop(ctx); context.go('/upscale'); }),
+                    _ToolTile(icon: Icons.store, label: 'Product Makeover', onTap: () { Navigator.pop(ctx); context.go('/product-makeover'); }),
+                    _ToolTile(icon: Icons.restore, label: 'Fix Old Image', onTap: () { Navigator.pop(ctx); context.go('/fixoldimage'); }),
+                    const SizedBox(height: AppSpacing.lg),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
