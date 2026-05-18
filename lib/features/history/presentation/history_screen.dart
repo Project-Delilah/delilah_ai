@@ -20,6 +20,7 @@ class GalleryScreen extends ConsumerStatefulWidget {
 
 class _GalleryScreenState extends ConsumerState<GalleryScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  bool _hasInitialized = false;
 
   @override
   void initState() {
@@ -36,6 +37,11 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> with SingleTicker
   @override
   Widget build(BuildContext context) {
     final galleryState = ref.watch(galleryNotifierProvider);
+
+    if (!_hasInitialized && galleryState.hasValue && galleryState.value!.isEmpty) {
+      _hasInitialized = true;
+      Future.microtask(() => ref.read(galleryNotifierProvider.notifier).fetchGallery());
+    }
 
     return Scaffold(
       backgroundColor: AppColors.canvasWhite,

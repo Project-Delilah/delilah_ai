@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'dart:convert';
 import '../../../core/config.dart';
 import '../../../core/services/secure_storage.dart';
 import '../../../shared/widgets/video_player_widget.dart';
@@ -40,6 +42,15 @@ class GalleryImage {
     );
   }
 
+  Map<String, dynamic> toJson() => {
+    'url': url,
+    'prompt': prompt,
+    'created_at': createdAt.toIso8601String(),
+    'public_id': publicId,
+    'type': type.name,
+    'aspect_ratio': aspectRatio.name,
+  };
+
   static MediaType _detectMediaType(String url) {
     final lowerUrl = url.toLowerCase();
     if (lowerUrl.contains('/video/') || 
@@ -73,14 +84,37 @@ class GalleryImage {
 
 class GalleryNotifier extends AsyncNotifier<List<GalleryImage>> {
   bool _hasLoadedOnce = false;
+  static const String _boxName = 'gallery_cache';
+  static const String _key = 'cached_images';
 
   @override
   Future<List<GalleryImage>> build() async {
     if (!_hasLoadedOnce) {
       _hasLoadedOnce = true;
-      Future.microtask(() => fetchGallery());
+      await _loadFromCache();
     }
     return [];
+  }
+
+  Future<void> _loadFromCache() async {
+    try {
+      await Hive.initFlutter();
+      final box = await Hive.openBox(_boxName);
+      final cached = box.get(_key);
+      if (cached != null) {
+        final List<dynamic> jsonList = jsonDecode(cached as String);
+        final images = jsonList.map((e) => GalleryImage.fromJson(e as Map<String, dynamic>)).toList();
+        state = AsyncData(images);
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _saveToCache(List<GalleryImage> images) async {
+    try {
+      final box = await Hive.openBox(_boxName);
+      final jsonList = images.map((e) => e.toJson()).toList();
+      await box.put(_key, jsonEncode(jsonList));
+    } catch (_) {}
   }
 
   Future<void> fetchGallery() async {
@@ -116,8 +150,14 @@ class GalleryNotifier extends AsyncNotifier<List<GalleryImage>> {
       }
       
       state = AsyncData(images);
+      await _saveToCache(images);
     } catch (e, st) {
-      state = AsyncError(e, st);
+      final cached = state.valueOrNull;
+      if (cached != null && cached.isNotEmpty) {
+        state = AsyncData(cached);
+      } else {
+        state = AsyncError(e, st);
+      }
     }
   }
 
@@ -136,12 +176,21 @@ class GalleryNotifier extends AsyncNotifier<List<GalleryImage>> {
       await dio.delete('/gallery', data: {'public_id': publicId});
       
       final currentImages = state.valueOrNull ?? [];
-      state = AsyncData(currentImages.where((img) => img.publicId != publicId).toList());
+      final updatedImages = currentImages.where((img) => img.publicId != publicId).toList();
+      state = AsyncData(updatedImages);
+      await _saveToCache(updatedImages);
       
       return true;
     } catch (e) {
       return false;
     }
+  }
+
+  Future<void> clearCache() async {
+    try {
+      final box = await Hive.openBox(_boxName);
+      await box.delete(_key);
+    } catch (_) {}
   }
 }
 

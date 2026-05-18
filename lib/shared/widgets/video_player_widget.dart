@@ -303,16 +303,22 @@ class VideoThumbnail extends StatelessWidget {
   });
 
   String _getCloudinaryThumbnailUrl(String videoUrl) {
-    if (videoUrl.contains('cloudinary.com')) {
-      try {
-        final parts = videoUrl.split('/upload/');
-        if (parts.length == 2) {
-          final transforms = 'so_0,vc_auto';
-          return '${parts[0]}/upload/$transforms/${parts[1]}';
-        }
-      } catch (_) {}
+    if (!videoUrl.contains('/video/upload/') || !videoUrl.contains('cloudinary.com')) {
+      return videoUrl;
     }
-    return videoUrl;
+    
+    try {
+      final uri = Uri.parse(videoUrl);
+      String path = uri.path;
+      
+      path = path.replaceFirst('/video/upload/', '/video/upload/so_1,f_jpg,q_auto,w_400/');
+      
+      path = path.replaceAll(RegExp(r'\.(mp4|mov|webm|mkv)$', caseSensitive: false), '.jpg');
+      
+      return '${uri.scheme}://${uri.host}$path';
+    } catch (_) {
+      return videoUrl;
+    }
   }
 
   @override
