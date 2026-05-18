@@ -333,7 +333,7 @@ class _MediaDetailSheetState extends ConsumerState<_MediaDetailSheet> {
                       ),
                     ),
                   const SizedBox(height: AppSpacing.lg),
-                  _ActionButtons(item: widget.item),
+                  _ActionButtons(item: widget.item, ref: widget.ref),
                 ],
               ),
             ),
@@ -398,13 +398,14 @@ class _PromptCard extends StatelessWidget {
   }
 }
 
-class _ActionButtons extends ConsumerWidget {
+class _ActionButtons extends StatelessWidget {
   final GalleryImage item;
+  final WidgetRef ref;
 
-  const _ActionButtons({required this.item});
+  const _ActionButtons({required this.item, required this.ref});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Row(
       children: [
         Expanded(
@@ -415,7 +416,7 @@ class _ActionButtons extends ConsumerWidget {
           Expanded(child: _WallpaperButton(item: item)),
         ],
         const SizedBox(width: AppSpacing.sm),
-        _DeleteButton(item: item),
+        _DeleteButton(item: item, ref: ref),
       ],
     );
   }
@@ -496,22 +497,23 @@ class _WallpaperButton extends StatelessWidget {
   }
 }
 
-class _DeleteButton extends ConsumerWidget {
+class _DeleteButton extends StatelessWidget {
   final GalleryImage item;
+  final WidgetRef ref;
 
-  const _DeleteButton({required this.item});
+  const _DeleteButton({required this.item, required this.ref});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return GlassButton(
-      onPressed: () => _confirmDelete(context, ref),
+      onPressed: () => _confirmDelete(context),
       label: 'Delete',
       icon: Icons.delete_outline,
       isPrimary: false,
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmDelete(BuildContext context) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (dialogCtx) => AlertDialog(
