@@ -1,40 +1,63 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/providers/auth_provider.dart';
+import '../../../../core/services/cloudinary_service.dart';
 import '../data/video_gen_repository.dart';
 
+final cloudinaryServiceProvider = Provider<CloudinaryService>((ref) => CloudinaryService());
+
 class VideoGenState {
+  final File? selectedImage;
+  final String? selectedImageUrl;
+  final bool isUploading;
   final bool isGenerating;
   final String? statusMessage;
   final String? resultUrl;
   final String? error;
   final String? prompt;
-  final String? imageUrl;
 
   const VideoGenState({
+    this.selectedImage,
+    this.selectedImageUrl,
+    this.isUploading = false,
     this.isGenerating = false,
     this.statusMessage,
     this.resultUrl,
     this.error,
     this.prompt,
-    this.imageUrl,
   });
 
   VideoGenState copyWith({
+    File? selectedImage,
+    String? selectedImageUrl,
+    bool? isUploading,
     bool? isGenerating,
     String? statusMessage,
     String? resultUrl,
     String? error,
     String? prompt,
-    String? imageUrl,
   }) {
     return VideoGenState(
+      selectedImage: selectedImage ?? this.selectedImage,
+      selectedImageUrl: selectedImageUrl ?? this.selectedImageUrl,
+      isUploading: isUploading ?? this.isUploading,
       isGenerating: isGenerating ?? this.isGenerating,
       statusMessage: statusMessage ?? this.statusMessage,
       resultUrl: resultUrl ?? this.resultUrl,
-      error: error ?? this.error,
+      error: error,
       prompt: prompt ?? this.prompt,
-      imageUrl: imageUrl ?? this.imageUrl,
+    );
+  }
+
+  VideoGenState clearImage() {
+    return VideoGenState(
+      isUploading: isUploading,
+      isGenerating: isGenerating,
+      statusMessage: statusMessage,
+      resultUrl: resultUrl,
+      error: error,
+      prompt: prompt,
     );
   }
 
@@ -46,6 +69,29 @@ class VideoGenState {
 class VideoGenNotifier extends Notifier<VideoGenState> {
   @override
   VideoGenState build() => const VideoGenState();
+
+  Future<void> setImage(File file) async {
+    final cloudinary = ref.read(cloudinaryServiceProvider);
+    final cachedUrl = cloudinary.getCachedUrl(file.path);
+    
+    if (cachedUrl != null) {
+      state = state.copyWith(selectedImage: file, selectedImageUrl: cachedUrl);
+      return;
+    }
+
+    state = state.copyWith(selectedImage: file, selectedImageUrl: null, isUploading: true, error: null);
+    
+    try {
+      final url = await cloudinary.uploadImage(file);
+      state = state.copyWith(selectedImageUrl: url, isUploading: false);
+    } catch (e) {
+      state = state.copyWith(isUploading: false, error: e.toString());
+    }
+  }
+
+  void clearImage() {
+    state = state.clearImage();
+  }
 
   Future<void> generateTextToVideo({
     required String prompt,
@@ -65,7 +111,6 @@ class VideoGenNotifier extends Notifier<VideoGenState> {
       resultUrl: null,
       error: null,
       prompt: prompt,
-      imageUrl: null,
     );
 
     try {
@@ -101,11 +146,15 @@ class VideoGenNotifier extends Notifier<VideoGenState> {
 
   Future<void> generateImageToVideo({
     required String prompt,
-    required String imageUrl,
     required VeoAspectRatio aspectRatio,
     required Resolution resolution,
     required int durationSeconds,
   }) async {
+    if (state.selectedImageUrl == null) {
+      state = state.copyWith(error: 'Please upload an image first');
+      return;
+    }
+
     final token = ref.read(authNotifierProvider);
     if (token is! AuthAuthenticated) {
       state = state.copyWith(error: 'Not authenticated');
@@ -118,7 +167,6 @@ class VideoGenNotifier extends Notifier<VideoGenState> {
       resultUrl: null,
       error: null,
       prompt: prompt,
-      imageUrl: imageUrl,
     );
 
     try {
@@ -126,7 +174,7 @@ class VideoGenNotifier extends Notifier<VideoGenState> {
 
       await for (final status in repo.veoImageToVideo(
         prompt: prompt,
-        imageUrl: imageUrl,
+        imageUrl: state.selectedImageUrl!,
         aspectRatio: aspectRatio,
         resolution: resolution,
         durationSeconds: durationSeconds,

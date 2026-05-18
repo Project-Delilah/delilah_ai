@@ -21,12 +21,10 @@ class VideoGenScreen extends ConsumerStatefulWidget {
 
 class _VideoGenScreenState extends ConsumerState<VideoGenScreen> with SingleTickerProviderStateMixin {
   final _promptController = TextEditingController();
-  final _imageUrlController = TextEditingController();
   late TabController _tabController;
   VideoAspectRatio _aspectRatio = VideoAspectRatio.ratio9x16;
   Resolution _resolution = Resolution.res720p;
   int _durationSeconds = 8;
-  File? _selectedImage;
   bool _useImage = false;
 
   @override
@@ -43,7 +41,6 @@ class _VideoGenScreenState extends ConsumerState<VideoGenScreen> with SingleTick
   @override
   void dispose() {
     _promptController.dispose();
-    _imageUrlController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -94,7 +91,7 @@ class _VideoGenScreenState extends ConsumerState<VideoGenScreen> with SingleTick
                     ),
                     if (_useImage) ...[
                       const SizedBox(height: AppSpacing.md),
-                      _buildImagePicker(),
+                      _buildImagePicker(state),
                     ],
                     const SizedBox(height: AppSpacing.lg),
                     _buildDurationSelector(),
@@ -102,7 +99,7 @@ class _VideoGenScreenState extends ConsumerState<VideoGenScreen> with SingleTick
                     SizedBox(
                       width: double.infinity,
                       child: GlassButton(
-                        onPressed: _canGenerate() ? () => _generate() : null,
+                        onPressed: _canGenerate(state) ? () => _generate(state) : null,
                         label: state.isGenerating ? state.statusMessage ?? 'Generating...' : 'Generate Video',
                         icon: Icons.play_arrow,
                       ),
@@ -201,7 +198,7 @@ class _VideoGenScreenState extends ConsumerState<VideoGenScreen> with SingleTick
     );
   }
 
-  Widget _buildImagePicker() {
+  Widget _buildImagePicker(VideoGenState state) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -214,15 +211,41 @@ class _VideoGenScreenState extends ConsumerState<VideoGenScreen> with SingleTick
         children: [
           Text('Reference Image', style: AppTextStyles.titleMedium),
           const SizedBox(height: AppSpacing.sm),
-          if (_selectedImage != null)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              child: Image.file(
-                _selectedImage!,
-                height: 120,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
+          if (state.selectedImage != null)
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  child: state.selectedImageUrl != null
+                      ? Image.network(
+                          state.selectedImageUrl!,
+                          height: 120,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        )
+                      : Image.file(
+                          state.selectedImage!,
+                          height: 120,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                ),
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: GestureDetector(
+                    onTap: () => ref.read(videoGenNotifierProvider.notifier).clearImage(),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppColors.cohereBlack.withAlpha(179),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.close, color: AppColors.canvasWhite, size: 16),
+                    ),
+                  ),
+                ),
+              ],
             )
           else
             Container(
@@ -236,23 +259,16 @@ class _VideoGenScreenState extends ConsumerState<VideoGenScreen> with SingleTick
               child: Icon(Icons.image, color: AppColors.mutedSlate, size: 40),
             ),
           const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: [
-              Expanded(
-                child: GlassButton(
-                  onPressed: _pickImage,
-                  label: 'Pick Image',
-                  icon: Icons.photo_library,
-                  isPrimary: false,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          GlassInput(
-            controller: _imageUrlController,
-            hint: 'Or paste image URL...',
-            icon: Icons.link,
+          SizedBox(
+            width: double.infinity,
+            child: GlassButton(
+              onPressed: state.isUploading ? null : _pickImage,
+              label: state.isUploading 
+                  ? 'Uploading...' 
+                  : (state.selectedImageUrl != null ? 'Image Ready' : 'Pick Image'),
+              icon: Icons.photo_library,
+              isPrimary: false,
+            ),
           ),
         ],
       ),
@@ -262,12 +278,20 @@ class _VideoGenScreenState extends ConsumerState<VideoGenScreen> with SingleTick
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 90);
-    if (image != null) {
-      setState(() {
-        _selectedImage = File(image.path);
-        _imageUrlController.clear();
-      });
+    
+    if (image == null) return;
+    
+    final extension = image.path.split('.').last.toLowerCase();
+    if (['gif', 'mp4', 'mov', 'avi', 'webm'].contains(extension)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select an image file')),
+        );
+      }
+      return;
     }
+
+    await ref.read(videoGenNotifierProvider.notifier).setImage(File(image.path));
   }
 
   Widget _buildProgressIndicator(VideoGenState state) {
@@ -292,13 +316,10 @@ class _VideoGenScreenState extends ConsumerState<VideoGenScreen> with SingleTick
     );
   }
 
-  bool _canGenerate() {
-    final state = ref.read(videoGenNotifierProvider);
-    if (state.isGenerating) return false;
+  bool _canGenerate(VideoGenState state) {
+    if (state.isGenerating || state.isUploading) return false;
     if (_promptController.text.trim().isEmpty) return false;
-    if (_useImage) {
-      if (_selectedImage == null && _imageUrlController.text.trim().isEmpty) return false;
-    }
+    if (_useImage && state.selectedImageUrl == null) return false;
     return true;
   }
 
@@ -306,33 +327,17 @@ class _VideoGenScreenState extends ConsumerState<VideoGenScreen> with SingleTick
     return _aspectRatio == VideoAspectRatio.ratio16x9 ? VeoAspectRatio.ratio16x9 : VeoAspectRatio.ratio9x16;
   }
 
-  void _generate() {
+  void _generate(VideoGenState state) {
     final prompt = _promptController.text.trim();
     if (prompt.isEmpty) return;
 
-    String? imageUrl;
     if (_useImage) {
-      if (_selectedImage != null) {
-        imageUrl = _selectedImage!.path;
-      } else {
-        imageUrl = _imageUrlController.text.trim();
-      }
-    }
-
-    if (_useImage && imageUrl != null) {
-      if (imageUrl.startsWith('http')) {
-        ref.read(videoGenNotifierProvider.notifier).generateImageToVideo(
-          prompt: prompt,
-          imageUrl: imageUrl,
-          aspectRatio: _getVeoAspectRatio(),
-          resolution: _resolution,
-          durationSeconds: _durationSeconds,
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please provide an image URL for Image to Video')),
-        );
-      }
+      ref.read(videoGenNotifierProvider.notifier).generateImageToVideo(
+        prompt: prompt,
+        aspectRatio: _getVeoAspectRatio(),
+        resolution: _resolution,
+        durationSeconds: _durationSeconds,
+      );
     } else {
       ref.read(videoGenNotifierProvider.notifier).generateTextToVideo(
         prompt: prompt,
