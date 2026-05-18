@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:better_player_plus/better_player_plus.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:gal/gal.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../../shared/widgets/glass_button.dart';
 import '../../../../shared/widgets/glass_input.dart';
+import '../../../../shared/widgets/video_player_widget.dart';
 import '../data/video_gen_repository.dart';
 import '../providers/video_gen_provider.dart';
 
@@ -384,16 +384,11 @@ class _VideoGenScreenState extends ConsumerState<VideoGenScreen> with SingleTick
                     borderRadius: BorderRadius.circular(AppRadius.lg),
                   ),
                   clipBehavior: Clip.antiAlias,
-                  child: BetterPlayer(
-                    controller: BetterPlayerController(
-                      const BetterPlayerConfiguration(
-                        autoPlay: true,
-                        looping: false,
-                      ),
-                      betterPlayerDataSource: BetterPlayerDataSource(
-                        BetterPlayerDataSourceType.network,
-                        state.resultUrl!,
-                      ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    child: VideoPlayerWidget(
+                      videoUrl: state.resultUrl!,
+                      autoPlay: true,
                     ),
                   ),
                 ),
