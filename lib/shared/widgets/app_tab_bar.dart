@@ -21,11 +21,12 @@ class AppTabBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: showBorder ? Border.all(color: AppColors.hairline) : null,
       ),
+      padding: const EdgeInsets.all(4),
       child: TabBar(
         controller: controller,
         labelColor: AppColors.cohereBlack,
         unselectedLabelColor: AppColors.mutedSlate,
-        indicatorSize: TabBarIndicatorSize.label,
+        indicatorSize: TabBarIndicatorSize.tab,
         dividerColor: Colors.transparent,
         indicator: BoxDecoration(
           color: AppColors.canvasWhite,
@@ -39,7 +40,6 @@ class AppTabBar extends StatelessWidget {
           fontWeight: FontWeight.w400,
           color: AppColors.mutedSlate,
         ),
-        padding: const EdgeInsets.all(4),
         tabs: tabs.map((t) => Tab(text: t)).toList(),
       ),
     );
