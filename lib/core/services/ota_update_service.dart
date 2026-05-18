@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class UpdateInfo {
   final String version;
@@ -31,14 +32,40 @@ class OtaUpdateService {
   static const String _githubRepo = 'Project-Delilah/delilah_ai';
   static const String _githubApiUrl = 'https://api.github.com/repos/$_githubRepo/releases/latest';
 
-  static const String _currentVersion = '1.0.18';
+  static const String _currentVersion = '1.0.0';
 
   String get currentVersion => _currentVersion;
 
+  Future<String> getVersionFromApp() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      return info.version;
+    } catch (e) {
+      debugPrint('OTA: Failed to get app version: $e');
+      return _currentVersion;
+    }
+  }
+
+  Future<String> _getDeviceAbi() async {
+    try {
+      if (Platform.isAndroid) {
+        final result = await Process.run('getprop', ['ro.product.cpu.abi']);
+        return result.stdout.toString().trim();
+      }
+    } catch (e) {
+      debugPrint('OTA: Failed to get device ABI: $e');
+    }
+    return '';
+  }
+
   Future<UpdateInfo?> checkForUpdate() async {
     try {
+      final appVersion = await getVersionFromApp();
       debugPrint('OTA: Checking for updates...');
-      debugPrint('OTA: Current version: $_currentVersion');
+      debugPrint('OTA: Current version: $appVersion');
+
+      final deviceAbi = await _getDeviceAbi();
+      debugPrint('OTA: Device ABI: $deviceAbi');
 
       final response = await _dio.get(
         _githubApiUrl,
@@ -55,20 +82,35 @@ class OtaUpdateService {
         final latestVersion = _extractVersion(data['tag_name'] ?? '');
         debugPrint('OTA: Latest release: ${data['tag_name']} ($latestVersion)');
 
-        if (_compareVersions(latestVersion, _currentVersion) > 0) {
+        if (_compareVersions(latestVersion, appVersion) > 0) {
           debugPrint('OTA: Update available!');
           final assets = data['assets'] as List? ?? [];
           String? downloadUrl;
           int sizeBytes = 0;
 
+          final isArm64 = deviceAbi.contains('arm64');
+          final targetSuffix = isArm64 ? 'arm64-v8a' : 'armeabi-v7a';
+
           for (final asset in assets) {
             final name = asset['name']?.toString() ?? '';
             debugPrint('OTA: Asset: $name');
-            if (name.contains('armeabi-v7a') || name.contains('arm64-v8a')) {
+            if (name.contains(targetSuffix) && name.endsWith('.apk')) {
               downloadUrl = asset['browser_download_url'];
               sizeBytes = asset['size'] ?? 0;
-              debugPrint('OTA: Found matching APK: $downloadUrl');
+              debugPrint('OTA: Found matching APK ($targetSuffix): $downloadUrl');
               break;
+            }
+          }
+
+          if (downloadUrl == null) {
+            for (final asset in assets) {
+              final name = asset['name']?.toString() ?? '';
+              if (name.endsWith('.apk') && !name.contains('x86')) {
+                downloadUrl = asset['browser_download_url'];
+                sizeBytes = asset['size'] ?? 0;
+                debugPrint('OTA: Fallback APK: $downloadUrl');
+                break;
+              }
             }
           }
 
