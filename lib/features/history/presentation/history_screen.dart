@@ -8,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/theme_controller.dart';
 import '../../../../shared/widgets/glass_button.dart';
 import '../../../../shared/widgets/video_player_widget.dart';
+import '../../../../shared/widgets/app_tab_bar.dart';
 import '../../../../shared/utils/wallpaper_engine.dart';
 import '../providers/history_provider.dart';
 
@@ -65,7 +66,13 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> with SingleTicker
                     ],
                   ),
                   const SizedBox(height: AppSpacing.sm),
-                  _TabBarWidget(tabController: _tabController),
+                  SizedBox(
+                    height: 36,
+                    child: AppTabBar(
+                      controller: _tabController,
+                      tabs: const ['All', 'Images', 'Videos'],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -87,34 +94,6 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> with SingleTicker
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _TabBarWidget extends StatelessWidget {
-  final TabController tabController;
-
-  const _TabBarWidget({required this.tabController});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.softStone,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-      ),
-      child: TabBar(
-        controller: tabController,
-        labelColor: AppColors.cohereBlack,
-        unselectedLabelColor: AppColors.mutedSlate,
-        indicatorSize: TabBarIndicatorSize.tab,
-        dividerColor: Colors.transparent,
-        tabs: const [
-          Tab(text: 'All'),
-          Tab(text: 'Images'),
-          Tab(text: 'Videos'),
-        ],
       ),
     );
   }

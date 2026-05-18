@@ -7,6 +7,7 @@ import '../../../../core/theme/theme_controller.dart';
 import '../../../../shared/widgets/glass_button.dart';
 import '../../../../shared/widgets/glass_input.dart';
 import '../../../../shared/widgets/video_player_widget.dart';
+import '../../../../shared/widgets/app_tab_bar.dart';
 import '../data/video_gen_repository.dart';
 import '../providers/video_gen_provider.dart';
 
@@ -61,22 +62,11 @@ class _VideoGenScreenState extends ConsumerState<VideoGenScreen> with SingleTick
                   children: [
                     Text('Video Generation', style: AppTextStyles.headlineLarge),
                     const SizedBox(height: AppSpacing.lg),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppColors.softStone,
-                        borderRadius: BorderRadius.circular(AppRadius.lg),
-                        border: Border.all(color: AppColors.hairline),
-                      ),
-                      child: TabBar(
+                    SizedBox(
+                      height: 36,
+                      child: AppTabBar(
                         controller: _tabController,
-                        labelColor: AppColors.cohereBlack,
-                        unselectedLabelColor: AppColors.mutedSlate,
-                        indicatorSize: TabBarIndicatorSize.tab,
-                        dividerColor: Colors.transparent,
-                        tabs: const [
-                          Tab(text: 'Text to Video'),
-                          Tab(text: 'Image to Video'),
-                        ],
+                        tabs: const ['Text to Video', 'Image to Video'],
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
