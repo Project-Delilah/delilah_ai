@@ -175,14 +175,15 @@ class GalleryNotifier extends AsyncNotifier<List<GalleryImage>> {
     }
   }
 
-  Future<bool> deleteImage(String? publicId, {String? url}) async {
+  Future<bool> deleteImage(String? publicId, {String? url, required MediaType type}) async {
     try {
       final token = await SecureStorage.getToken();
       if (token == null || token.isEmpty) return false;
 
       final effectivePublicId = publicId ?? (url != null ? _extractPublicIdFromUrl(url) : null);
-      debugPrint('Delete: publicId=$publicId, url=$url, effective=$effectivePublicId');
       if (effectivePublicId == null) return false;
+
+      final resType = type == MediaType.video ? 'video' : 'image';
 
       final dio = Dio(BaseOptions(
         baseUrl: AppConfig.apiBaseUrl,
@@ -191,12 +192,10 @@ class GalleryNotifier extends AsyncNotifier<List<GalleryImage>> {
         },
       ));
 
-      debugPrint('Delete request to /gallery with public_id: $effectivePublicId');
       await dio.delete('/gallery', data: {
         'public_id': effectivePublicId,
-        'resource_type': 'image',
+        'resource_type': resType,
       });
-      debugPrint('Delete request completed');
       
       final currentImages = state.valueOrNull ?? [];
       final updatedImages = currentImages.where((img) => 

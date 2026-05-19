@@ -536,6 +536,7 @@ class _DeleteButton extends StatelessWidget {
       final success = await ref.read(galleryNotifierProvider.notifier).deleteImage(
         item.publicId,
         url: item.url,
+        type: item.type,
       );
       if (context.mounted) {
         Navigator.pop(context);
