@@ -192,7 +192,10 @@ class GalleryNotifier extends AsyncNotifier<List<GalleryImage>> {
       ));
 
       debugPrint('Delete request to /gallery with public_id: $effectivePublicId');
-      await dio.delete('/gallery', data: {'public_id': effectivePublicId});
+      await dio.delete('/gallery', data: {
+        'public_id': effectivePublicId,
+        'resource_type': 'image',
+      });
       debugPrint('Delete request completed');
       
       final currentImages = state.valueOrNull ?? [];
