@@ -160,7 +160,10 @@ class _VideoGenScreenState extends ConsumerState<VideoGenScreen> with SingleTick
             _OptionChip(
               label: '4K',
               isSelected: _resolution == Resolution.res4k,
-              onTap: () => setState(() => _resolution = Resolution.res4k),
+              onTap: () => setState(() {
+                _resolution = Resolution.res4k;
+                if (_durationSeconds != 8) _durationSeconds = 8;
+              }),
             ),
           ],
         ),
@@ -178,11 +181,16 @@ class _VideoGenScreenState extends ConsumerState<VideoGenScreen> with SingleTick
           value: _durationSeconds.toDouble(),
           min: 4,
           max: 8,
-          divisions: 1,
+          divisions: 2,
           label: '${_durationSeconds}s',
           activeColor: AppColors.cohereBlack,
           inactiveColor: AppColors.hairline,
-          onChanged: (value) => setState(() => _durationSeconds = value.round()),
+          onChanged: (value) => setState(() {
+            _durationSeconds = value.round();
+            if (_durationSeconds != 8 && _resolution == Resolution.res4k) {
+              _resolution = Resolution.res1080p;
+            }
+          }),
         ),
       ],
     );
