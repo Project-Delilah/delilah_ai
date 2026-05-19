@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter/foundation.dart';
 import 'dart:convert';
 import '../../../core/config.dart';
 import '../../../core/services/secure_storage.dart';
@@ -180,6 +181,7 @@ class GalleryNotifier extends AsyncNotifier<List<GalleryImage>> {
       if (token == null || token.isEmpty) return false;
 
       final effectivePublicId = publicId ?? (url != null ? _extractPublicIdFromUrl(url) : null);
+      debugPrint('Delete: publicId=$publicId, url=$url, effective=$effectivePublicId');
       if (effectivePublicId == null) return false;
 
       final dio = Dio(BaseOptions(
@@ -189,7 +191,9 @@ class GalleryNotifier extends AsyncNotifier<List<GalleryImage>> {
         },
       ));
 
+      debugPrint('Delete request to /gallery with public_id: $effectivePublicId');
       await dio.delete('/gallery', data: {'public_id': effectivePublicId});
+      debugPrint('Delete request completed');
       
       final currentImages = state.valueOrNull ?? [];
       final updatedImages = currentImages.where((img) => 
@@ -199,7 +203,8 @@ class GalleryNotifier extends AsyncNotifier<List<GalleryImage>> {
       await _saveToCache(updatedImages);
       
       return true;
-    } catch (e) {
+    } catch (e, st) {
+      debugPrint('Delete failed: $e $st');
       return false;
     }
   }
